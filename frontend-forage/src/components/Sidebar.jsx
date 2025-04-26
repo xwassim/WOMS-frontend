@@ -1,44 +1,82 @@
-import { NavLink } from 'react-router-dom'
-import { FiHome, FiFilePlus, FiSettings } from 'react-icons/fi'
+import React from "react";
+import { NavLink } from "react-router-dom";
+import {
+  FaHome,
+  FaClipboardList,
+  FaCalendarAlt,
+  FaFileAlt,
+  FaPlusCircle,
+} from "react-icons/fa";
+import logo from "../assets/Sonatrach.png"; // Adjust the path as necessary
 
-const Sidebar = () => (
-  <nav className="w-64 bg-white shadow-sm p-4">
-    <div className="space-y-2">
-      <NavLink
-        to="/"
-        className={({ isActive }) => 
-          `flex items-center p-2 rounded-lg ${
-            isActive ? 'bg-blue-100 text-blue-600' : 'text-gray-600 hover:bg-gray-100'
-          }`
-        }
-      >
-        <FiHome className="mr-3" />
-        Dashboard
-      </NavLink>
-      <NavLink
-        to="/rapports"
-        className={({ isActive }) => 
-          `flex items-center p-2 rounded-lg ${
-            isActive ? 'bg-blue-100 text-blue-600' : 'text-gray-600 hover:bg-gray-100'
-          }`
-        }
-      >
-        <FiFilePlus className="mr-3" />
-        Rapports
-      </NavLink>
-      <NavLink
-        to="/settings"
-        className={({ isActive }) => 
-          `flex items-center p-2 rounded-lg ${
-            isActive ? 'bg-blue-100 text-blue-600' : 'text-gray-600 hover:bg-gray-100'
-          }`
-        }
-      >
-        <FiSettings className="mr-3" />
-        Paramètres
-      </NavLink>
+const Sidebar = () => {
+  return (
+    <div className="w-64 bg-[#1C2434] text-white shadow-lg">
+      <div className="p-5 border-b border-gray-950">
+        <h1 className="text-xl text-center font-semibol d">Drilling Management</h1>
+      </div>
+      <div className="flex justify-center items-center p-4">
+        <img src={logo} alt="logo" height="100px" width="69px"></img>
+      </div>
+      <nav className="p-4">
+        <ul className="space-y-2">
+          <li>
+            <NavLink
+              to="/operator-view"
+              className={({ isActive }) =>
+                `flex items-center p-2 rounded-lg ${
+                  isActive ? "bg-blue-700" : "hover:bg-blue-700"
+                }`
+              }
+            >
+              <FaHome className="mr-3" />
+              <span>Liste des forages</span>
+            </NavLink>
+          </li>
+         
+          {/* <li>
+            <NavLink
+              to="/drilling-planning"
+              className={({ isActive }) =>
+                `flex items-center p-2 rounded-lg ${
+                  isActive ? "bg-blue-700" : "hover:bg-blue-700"
+                }`
+              }
+            >
+              <FaCalendarAlt className="mr-3" />
+              <span>Drilling Planning</span>
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
+              to="/reports-catalog"
+              className={({ isActive }) =>
+                `flex items-center p-2 rounded-lg ${
+                  isActive ? "bg-blue-700" : "hover:bg-blue-700"
+                }`
+              }
+            >
+              <FaFileAlt className="mr-3" />
+              <span>Reports Catalog</span>
+            </NavLink>
+          </li> */}
+          <li>
+            <NavLink
+              to="/submit-report"
+              className={({ isActive }) =>
+                `flex items-center p-2 rounded-lg ${
+                  isActive ? "bg-blue-700" : "hover:bg-blue-700"
+                }`
+              }
+            >
+              <FaPlusCircle className="mr-3" />
+              <span>Soumettre Rapport</span>
+            </NavLink>
+          </li>
+        </ul>
+      </nav>
     </div>
-  </nav>
-)
+  );
+};
 
-export default Sidebar
+export default Sidebar;

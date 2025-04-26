@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FiFilePlus, FiX } from 'react-icons/fi';
 
-const Rapports = () => {
+const ReportSubmission = () => {
   // États initiaux avec données pré-remplies comme dans vos captures
   const [file, setFile] = useState(null);
   const [problems, setProblems] = useState([
@@ -198,4 +198,4 @@ const Rapports = () => {
   );
 };
 
-export default Rapports;
+export default ReportSubmission;
