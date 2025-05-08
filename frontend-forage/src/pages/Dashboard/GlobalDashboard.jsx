@@ -1,195 +1,350 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { FiArrowLeft } from 'react-icons/fi';
+import {
+  Box,
+  Typography,
+  Paper,
+  Grid,
+  Divider,
+  Chip,
+  CircularProgress
+} from '@mui/material';
+import { PieChart } from '@mui/x-charts/PieChart';
+import { Gauge } from '@mui/x-charts/Gauge';
+import data from '../../data/data';
 
 const GlobalDashboard = () => {
   const { wellId } = useParams();
-  
-  // Données du puit
-  const wellData = {
-    name: "Puit AAAA",
-    site: "Site Hasai Mestabadi, 17 Patrick Street",
-    lastUpdated: "10-10-2025",
-    costStatus: "L'état des couts est",
-    delayStatus: "L'état des délais est",
-    criticalProblems: [
-      { code: "VR1.3", value: "1 56", variation: "+6.05%" },
-      { code: "VR2.1", value: "1 56" }
-    ],
-    cost: "$1,324",
-    delay: "+5j",
-    phases: ["drilling 26°x20°", "drilling 16°x13°"]
+  const well = data.drillWells.find(w => w.id === Number(wellId));
+
+  if (!well) {
+    return (
+      <Box p={4} color="error.main">
+        Well not found
+      </Box>
+    );
+  }
+
+  // Calculate cost and delay metrics
+  const calculateMetrics = () => {
+    const totalCost = well.totalCost;
+    const plannedCost = well.planning?.totalCost || totalCost;
+    const costPercentage = Math.min(100, Math.round((totalCost / plannedCost) * 100));
+    
+    const totalDuration = well.totalDuration;
+    const plannedDuration = well.planning?.totalDuration || totalDuration;
+    const delayPercentage = Math.min(100, Math.round((totalDuration / plannedDuration) * 100));
+    
+    const delayDays = well.delay || 0;
+    
+    // Find critical problems (severity 3)
+    const criticalProblems = well.phases.flatMap(phase => 
+      phase.dailyReports.flatMap(report => 
+        report.problems?.filter(problem => problem.severity === 3) || []
+      )
+    );
+    
+    return {
+      costPercentage,
+      delayPercentage,
+      delayDays,
+      criticalProblems,
+      totalCost,
+      plannedCost,
+      totalDuration,
+      plannedDuration
+    };
   };
 
-  // Données de répartition des problèmes
-  const problemDistribution = {
-    phase: "Phase 26°x20°",
-    severity1: "20%",
-    severity2: "60%",
-    severity3: "20%"
+  const metrics = calculateMetrics();
+
+  // Calculate problem distribution by severity
+  const calculateProblemDistribution = () => {
+    const allProblems = well.phases.flatMap(phase => 
+      phase.dailyReports.flatMap(report => report.problems || [])
+    );
+    
+    const severityCounts = [0, 0, 0];
+    allProblems.forEach(problem => {
+      if (problem.severity >= 1 && problem.severity <= 3) {
+        severityCounts[problem.severity - 1]++;
+      }
+    });
+    
+    const totalProblems = severityCounts.reduce((sum, count) => sum + count, 0);
+    
+    return {
+      data: [
+        { id: 0, value: severityCounts[0], label: 'Critique (1)', color: '#ef4444' },
+        { id: 1, value: severityCounts[1], label: 'Moyen (2)', color: '#eab308' },
+        { id: 2, value: severityCounts[2], label: 'Mineur (3)', color: '#22c55e' }
+      ],
+      total: totalProblems
+    };
+  };
+
+  const problemDistribution = calculateProblemDistribution();
+
+  // Format currency
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6 font-sans">
-      {/* En-tête avec bouton Retour */}
-      <div className="mb-6 flex items-center">
-        <Link to="/operator-view" className="flex items-center text-blue-600 hover:text-blue-800 mr-4">
-          <FiArrowLeft className="mr-1" />
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Retour</h1>
-        </div>
-      </div>
+    <Box sx={{ p: 0 }}>
+      {/* Header with Back button */}
+      
 
-      {/* Titre du puit */}
-      <div className="mb-8 border-b pb-4">
-        <h2 className="text-2xl font-bold text-gray-800">{wellData.name}</h2>
-        <p className="text-gray-600">{wellData.site}</p>
-      </div>
+      {/* Main Grid Layout */}
+      <Grid container spacing={3}>
+        {/* Global Cost Status - Gauge Chart */}
+        <Grid item xs={12} md={6}>
+          <Paper elevation={3} sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6" fontWeight="bold">
+                État des Coûts Globaux
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Mis à jour le {new Date().toLocaleDateString('fr-FR')}
+              </Typography>
+            </Box>
+            
+            <Typography color={metrics.totalCost >= metrics.plannedCost ? 'error.main' : 'success.main'} sx={{ mb: 2 }}>
+              {metrics.totalCost >= metrics.plannedCost ? 'Dépassement du budget prévu' : 'Dans les limites du budget'}
+            </Typography>
+            
+            <Box sx={{ height: 250, display: 'flex', justifyContent: 'center' }}>
+              <Gauge
+                width={300}
+                height={200}
+                value={metrics.costPercentage}
+                valueMin={0}
+                valueMax={100}
+                startAngle={-110}
+                endAngle={110}
+                text={({ value, valueMax }) => `${value}%`}
+                cornerRadius="50%"
+                sx={{
+                  [`& .MuiGauge-valueArc`]: {
+                    fill: metrics.costPercentage >= 90 ? '#ef4444' : 
+                          metrics.costPercentage >= 80 ? '#eab308' : '#3b82f6'
+                  },
+                  [`& .MuiGauge-referenceArc`]: {
+                    fill: '#e0e0e0'
+                  }
+                }}
+              />
+            </Box>
+            
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+              {[0, 0.4, 0.6, 0.8, 1].map((value, index) => (
+                <Typography key={index} variant="caption" color="text.secondary">
+                  {index === 0 ? '0' : formatCurrency(metrics.plannedCost * value)}
+                </Typography>
+              ))}
+            </Box>
+          </Paper>
+        </Grid>
 
-      {/* Section Etat des Coûts Globaux */}
-      <div className="mb-8 p-4 border rounded-lg">
-        <h3 className="text-xl font-semibold mb-2">Etat des Couts Globaux</h3>
-        <div className="mb-4">
-          <p className="text-gray-700">
-            <strong>{wellData.costStatus}</strong><br />
-            <span className="text-sm">Mis à jour le {wellData.lastUpdated}</span>
-          </p>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-6 mb-2">
-          <div 
-            className="bg-blue-600 h-6 rounded-full flex items-center justify-end"
-            style={{ width: '60%' }}
-          >
-            <span className="text-white text-xs mr-2">60%</span>
-          </div>
-        </div>
-        <div className="flex justify-between text-sm text-gray-600">
-          <span>0</span>
-          <span>40</span>
-          <span>60</span>
-          <span>80</span>
-          <span>100</span>
-        </div>
-      </div>
+        {/* Global Delay Status - Gauge Chart */}
+        <Grid item xs={12} md={6}>
+          <Paper elevation={3} sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6" fontWeight="bold">
+                État des Délais Globaux
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Mis à jour le {new Date().toLocaleDateString('fr-FR')}
+              </Typography>
+            </Box>
+            
+            <Typography color={metrics.delayDays > 0 ? 'error.main' : 'success.main'} sx={{ mb: 2 }}>
+              {metrics.delayDays > 0 ? 'Retard dans le planning' : 'Dans les délais prévus'}
+            </Typography>
+            
+            <Box sx={{ height: 250, display: 'flex', justifyContent: 'center' }}>
+              <Gauge
+                width={300}
+                height={200}
+                value={metrics.delayPercentage}
+                valueMin={0}
+                valueMax={100}
+                startAngle={-110}
+                endAngle={110}
+                text={({ value, valueMax }) => `${value}%`}
+                cornerRadius="50%"
+                sx={{
+                  [`& .MuiGauge-valueArc`]: {
+                    fill: metrics.delayPercentage >= 90 ? '#ef4444' : 
+                          metrics.delayPercentage >= 80 ? '#eab308' : '#22c55e'
+                  },
+                  [`& .MuiGauge-referenceArc`]: {
+                    fill: '#e0e0e0'
+                  }
+                }}
+              />
+            </Box>
+            
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+              {[0, 0.4, 0.6, 0.8, 1].map((value, index) => (
+                <Typography key={index} variant="caption" color="text.secondary">
+                  {index === 0 ? '0j' : `${Math.round(metrics.plannedDuration * value)}j`}
+                </Typography>
+              ))}
+            </Box>
+          </Paper>
+        </Grid>
 
-      {/* Section Etat des Délais Globaux */}
-      <div className="mb-8 p-4 border rounded-lg">
-        <h3 className="text-xl font-semibold mb-2">Etat des Delais Globaux</h3>
-        <div className="mb-4">
-          <p className="text-gray-700">
-            <strong>{wellData.delayStatus}</strong><br />
-            <span className="text-sm">Mis à jour le {wellData.lastUpdated}</span>
-          </p>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-6 mb-2">
-          <div 
-            className="bg-green-600 h-6 rounded-full flex items-center justify-end"
-            style={{ width: '75%' }}
-          >
-            <span className="text-white text-xs mr-2">75%</span>
-          </div>
-        </div>
-        <div className="flex justify-between text-sm text-gray-600">
-          <span>0</span>
-          <span>40</span>
-          <span>60</span>
-          <span>80</span>
-          <span>100</span>
-        </div>
-      </div>
+        {/* Critical Problems */}
+        <Grid item xs={12} md={6}>
+          <Paper elevation={3} sx={{ p: 3, height: '100%' }}>
+            <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
+              Problèmes Critiques (Gravité 3)
+            </Typography>
+            
+            {metrics.criticalProblems.length > 0 ? (
+              <>
+                <Typography color="error.main" fontWeight="medium" sx={{ mb: 2 }}>
+                  {metrics.criticalProblems.length} problème(s) sans solution
+                </Typography>
+                
+                {metrics.criticalProblems.slice(0, 3).map((problem, index) => (
+                  <Box key={index} sx={{ mb: 2, pb: 2, borderBottom: '1px solid #e0e0e0' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography fontWeight="medium">{problem.name}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {new Date(problem.dateReported).toLocaleDateString('fr-FR')}
+                      </Typography>
+                    </Box>
+                    <Typography variant="body2" color="text.secondary">{problem.type}</Typography>
+                    {problem.impact?.delay > 0 && (
+                      <Typography color="error.main">
+                        Retard: +{problem.impact.delay} jours
+                      </Typography>
+                    )}
+                  </Box>
+                ))}
+                
+                {metrics.criticalProblems.length > 3 && (
+                  <Typography variant="caption" color="text.secondary">
+                    +{metrics.criticalProblems.length - 3} autres problèmes...
+                  </Typography>
+                )}
+              </>
+            ) : (
+              <Typography color="text.secondary">Aucun problème critique</Typography>
+            )}
+          </Paper>
+        </Grid>
 
-      {/* Grille de 2 colonnes pour les sections inférieures */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        {/* Problèmes de gravité 3 */}
-        <div className="p-4 border rounded-lg">
-          <h3 className="text-xl font-semibold mb-3">Problèmes de gravité 3</h3>
-          
-          <div className="mb-3">
-            <h4 className="font-medium text-red-600">Problèmes sans solutions</h4>
-          </div>
-          
-          {wellData.criticalProblems.map((problem, index) => (
-            <div key={index} className="mb-3 pb-3 border-b">
-              <h4 className="font-medium">{problem.code}</h4>
-              <p className="text-gray-700">{problem.value}</p>
-              {problem.variation && (
-                <p className="text-red-600">{problem.variation}</p>
-              )}
-            </div>
-          ))}
-        </div>
+        {/* Problem Distribution - Pie Chart */}
+        <Grid item xs={12} md={6}>
+          <Paper elevation={3} sx={{ p: 3, height: '100%' }}>
+            <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
+              Répartition des Problèmes
+            </Typography>
+            
+            {problemDistribution.total > 0 ? (
+              <Box sx={{ height: 300 }}>
+                <PieChart
+                  
+                  height={200}
+                  series={[
+                    {
+                      data: problemDistribution.data,
+                      innerRadius: 30,
+                      outerRadius: 100,
+                      paddingAngle: 5,
+                      cornerRadius: 5,
+                      highlightScope: { faded: 'global', highlighted: 'item' },
+                      faded: { innerRadius: 30, additionalRadius: -30, color: 'gray' },
+                    }
+                  ]}
+                  slotProps={{
+                    legend: {
+                      direction: 'row',
+                      position: { vertical: 'bottom', horizontal: 'middle' },
+                      padding: 0,
+                    },
+                  }}
+                />
+              </Box>
+            ) : (
+              <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Typography color="text.secondary">Aucun problème à afficher</Typography>
+              </Box>
+            )}
+            
+            <Box sx={{ mt: 2 }}>
+              {problemDistribution.data.map((item, index) => (
+                <Box key={index} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <Box sx={{ width: 12, height: 12, bgcolor: item.color, mr: 1, borderRadius: '50%' }} />
+                  <Typography variant="body2">
+                    {item.label}: {item.value} ({Math.round((item.value / problemDistribution.total) * 100)}%)
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </Paper>
+        </Grid>
 
-        {/* Répartition des problèmes */}
-        <div className="p-4 border rounded-lg">
-          <h3 className="text-xl font-semibold mb-3">Répartitions des problèmes selon leurs gravité</h3>
-          
-          <div className="mb-4">
-            <h4 className="font-medium">{problemDistribution.phase}</h4>
-            <div className="flex mt-2">
-              <div 
-                className="bg-red-500 h-4" 
-                style={{ width: `${problemDistribution.severity1}` }}
-              ></div>
-              <div 
-                className="bg-yellow-500 h-4" 
-                style={{ width: `${problemDistribution.severity2}` }}
-              ></div>
-              <div 
-                className="bg-green-500 h-4" 
-                style={{ width: `${problemDistribution.severity3}` }}
-              ></div>
-            </div>
-            <div className="flex justify-between mt-1 text-sm text-gray-600">
-              <span>{problemDistribution.severity1}</span>
-              <span>{problemDistribution.severity2}</span>
-              <span>{problemDistribution.severity3}</span>
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
-              <span>Problèmes de gravité 1</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
-              <span>Problèmes de gravité 2</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-              <span>Problèmes de gravité 3</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Vision globale */}
-      <div className="p-4 border rounded-lg">
-        <h3 className="text-xl font-semibold mb-4">Vision globale sur les couts et les délais</h3>
-        
-        <div className="grid grid-cols-3 gap-4 text-center mb-3">
-          <div>
-            <p className="text-2xl font-bold">{wellData.cost}</p>
-            <p className="text-sm text-gray-600">Couts</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold">{wellData.delay}</p>
-            <p className="text-sm text-gray-600">Délais</p>
-          </div>
-          <div>
-            <p className="text-2xl font-bold">$1.2M</p>
-            <p className="text-sm text-gray-600">Couts et délais prévisionnel</p>
-          </div>
-        </div>
-        
-        <div className="flex justify-center space-x-6">
-          {wellData.phases.map((phase, index) => (
-            <span key={index} className="text-sm text-gray-700">{phase}</span>
-          ))}
-        </div>
-      </div>
-    </div>
+        {/* Global Overview */}
+        <Grid item xs={12}>
+          <Paper elevation={3} sx={{ p: 3 }}>
+            <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
+              Vue Globale
+            </Typography>
+            
+            <Grid container spacing={3} sx={{ mb: 3 }}>
+              <Grid item xs={4}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="h5" fontWeight="bold">
+                    {formatCurrency(metrics.totalCost)}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Coûts actuels
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={4}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="h5" fontWeight="bold" color={metrics.delayDays > 0 ? 'error.main' : 'success.main'}>
+                    {metrics.delayDays > 0 ? `+${metrics.delayDays}j` : 'Dans les temps'}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Retard
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid item xs={4}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="h5" fontWeight="bold">
+                    {formatCurrency(metrics.plannedCost)}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Budget prévisionnel
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+            
+            <Divider sx={{ my: 2 }} />
+            
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'center' }}>
+              {well.phases.map((phase, index) => (
+                <Chip key={index} label={phase.name} sx={{ bgcolor: '#f5f5f5' }} />
+              ))}
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>
+    </Box>
   );
 };
 

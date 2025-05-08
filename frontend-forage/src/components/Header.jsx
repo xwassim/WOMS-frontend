@@ -24,7 +24,7 @@ const Header = () => {
             <FaBell size={20} />
           </button>
           <div className="flex items-center">
-            <FaUserCircle size={24} className="text-blue-600 mr-2" />
+            <FaUserCircle size={30} className="text-[#3C50E0] mr-2" />
             <span className="font-medium">Kruluz Utsman</span>
           </div>
         </div>

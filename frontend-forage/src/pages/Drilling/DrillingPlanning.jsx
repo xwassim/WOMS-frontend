@@ -1,6 +1,11 @@
 import React from 'react';
-
+import { useParams, Link } from 'react-router-dom';
 const DrillingPlanning = () => {
+    // const { wellId } = useParams();
+    
+    
+    // // Find the well in your data
+    // const well = data.drillWells.find(w => w.id === Number(wellId));
   const phases = [
     {
       phase: '26" x 20" inchs',
