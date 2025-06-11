@@ -3,6 +3,7 @@ import { Card, CardContent } from "../ui/Card"; // Optional component for well-s
 import { useParams } from "react-router-dom";
 import data from "../../data/data"; // Import your data.js
 import { FiArrowLeft } from 'react-icons/fi';
+import { FaLocationDot } from "react-icons/fa6";
 
 export default function WellHeader() {
   const { wellId } = useParams();
@@ -20,11 +21,12 @@ export default function WellHeader() {
       <CardContent className="flex items-center gap-[14.09px] p-0 w-full">
    
         <div className="relative w-[42.27px] h-[42.27px] bg-[#1652df1a] rounded-[36.99px] overflow-hidden flex-shrink-0">
-          <img
+          {/* <img
             className="absolute w-3.5 h-[18px] top-3 left-3.5"
             alt="Location marker"
             src="/default-marker-component.svg"
-          />
+          /> */}
+          <FaLocationDot className="absolute w-3.5 h-[18px] top-3 left-3.5 text-[#1652df]" />
         </div>
 
         <div className="flex flex-col items-start gap-[5.28px]">

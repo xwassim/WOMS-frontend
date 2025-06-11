@@ -14,6 +14,8 @@ import GlobalDashboard from "./pages/Dashboard/GlobalDashboard";
 import PhaseDashboard from "./pages/Dashboard/PhaseDashboard";
 import AddNewForage from "./pages/Drilling/New_drilling/AddNewForage";
 import WellLayout from "./components/Wells/WellLayout"; // New layout component for well-specific pages
+import Dashboard from "./pages/Dashboard/Dashboard"; // Test component for testing purposes
+
 
 function App() {
   return (
@@ -46,6 +48,7 @@ function App() {
                         path="/add-new-forage"
                         element={<AddNewForage />}
                       />
+                      
                       <Route path="/planning" element={<DrillingPlanning />} />
                       <Route path="/well/:wellId" element={<WellLayout />}>
                         <Route index element={<GlobalDashboard />} />
@@ -53,6 +56,8 @@ function App() {
                           path="dashboard_global"
                           element={<GlobalDashboard />}
                         />
+                        {/* <Route path="/add_report" element={<AddReport />} /> */}
+                        <Route path="Dash" element={<Dashboard />} />
                         <Route path="dashboard" element={<PhaseDashboard />} />
                         {/* <Route path="planning" element={<DrillingPlanning />} /> */}
                         <Route path="reports">
@@ -77,9 +82,12 @@ function App() {
           <Route path="/submission-success" element={<SubmissionSuccess />} />
           <Route path="/add-new-forage" element={<AddNewForage />} />
           <Route path="/planning" element={<DrillingPlanning />} />
+      
           {/* Well-specific nested routes with their own layout */}
           <Route path="/well/:wellId" element={<WellLayout />}>
             <Route index element={<GlobalDashboard />} />
+            <Route path="Dash" element={<Dashboard />} />
+             {/* <Route path="/add_report" element={<AddReport />} /> */}
             <Route path="dashboard_global" element={<GlobalDashboard />} />
             <Route path="dashboard" element={<PhaseDashboard />} />
             {/* <Route path="planning" element={<DrillingPlanning />} /> */}

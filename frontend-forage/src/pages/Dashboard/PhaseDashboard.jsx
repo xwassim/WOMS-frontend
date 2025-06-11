@@ -115,7 +115,7 @@ const PhaseDashboard = () => {
     <Box sx={{ p: 0 }}>
       {/* Header with Back button */}
       
-
+      {/* <PhaseDrillingOverview drillWell={selectedWell} className="mt-8" /> */}
       {/* Phase Selection */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>Sélectionnez une phase</Typography>

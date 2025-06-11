@@ -236,7 +236,7 @@ const OperatorView = () => {
                   <td className="py-3 px-4 text-[#4C506B]">
                     <div className="flex space-x-4">
                       <Link
-                        to={`well/${site.id}/dashboard_global`}
+                        to={`well/${site.id}/Dash`}
                         className="text-blue-600 hover:text-blue-800 underline"
                       >
                         Dashboard

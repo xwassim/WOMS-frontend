@@ -111,9 +111,8 @@ const ReportsCatalog = () => {
     <div className="bg-white rounded-lg shadow-lg relative p-6 font-dm-sans">
       {/* En-tête avec barre de recherche */}
       <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
-        <h1 className="text-2xl text-gray-800">
-          Catalogue des rapports du puit :{" "}
-          <span className="font-bold">{well.name}</span>
+        <h1 className="text-xl text-gray-800">
+          Catalogue des rapports 
         </h1>
 
         <div className="flex items-center space-x-4 flex-wrap justify-end gap-4">
@@ -156,8 +155,8 @@ const ReportsCatalog = () => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-[#ececec]">
             <tr className="text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-              <th className="px-6 py-3">ID Rapport</th>
-              <th className="px-6 py-3">Date</th>
+              {/* <th className="px-6 py-3">ID Rapport</th> */}
+              <th className="px-6 py-3">Date de soumission</th>
               <th className="px-6 py-3">Phase</th>
               <th className="px-6 py-3">Actions</th>
             </tr>
@@ -169,9 +168,9 @@ const ReportsCatalog = () => {
                   key={`${report.phaseId}-${report.id}`}
                   className="border-b border-[#d5d5d5] text-[#1C2434] hover:bg-[#F9FAFB]"
                 >
-                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                  {/* <td className="px-6 py-4 whitespace-nowrap text-center">
                     {report.id}
-                  </td>
+                  </td> */}
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     {report.date}
                   </td>
@@ -305,12 +304,12 @@ const ReportsCatalog = () => {
           </div>
         </DialogContent>
         <DialogActions>
-          <Button onClick={resetFilters} style={{ color: "#6B7280" }}>
+          <Button onClick={resetFilters} style={{backgroundColor: "#eeeeee", color: "#6B7280",borderRadius: "6px" }}>
             Réinitialiser
           </Button>
           <Button
             onClick={() => setShowFilterDialog(false)}
-            style={{ backgroundColor: "#3B82F6", color: "white" }}
+            style={{ backgroundColor: "#3C50E0", color: "white" ,borderRadius: "6px"}}
             variant="contained"
           >
             Appliquer

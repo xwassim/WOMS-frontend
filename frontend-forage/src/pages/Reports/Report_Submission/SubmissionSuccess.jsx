@@ -11,7 +11,7 @@ const SubmissionSuccess = () => {
       <h1 className="text-2xl font-bold text-gray-800 mb-2">Félicitation</h1>
       <p className="text-lg text-gray-600 mb-6">Rapport soumis avec succès !</p>
       
-      <div className="border-t pt-4">
+      {/* <div className="border-t pt-4">
         <h3 className="text-md font-semibold mb-2">File Version</h3>
         <div className="space-y-2 mb-4">
           <div className="flex items-center justify-center">
@@ -27,14 +27,22 @@ const SubmissionSuccess = () => {
             <label htmlFor="logout">Se Déconnecter</label>
           </div>
         </div>
-      </div>
-
+      </div> */}
+<div className='flex flex-row justify-center space-x-4'>
       <Link
         to="/operator-view"
-        className="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        className="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-gray-800 bg-gray-300 hover:bg-gray-400 "
       >
-        Poursuivre
+        Retour à la page d'accueil
       </Link>
+      
+      <Link
+        to="/operator-view"
+        className="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#3C50E0] hover:bg-[#2c3ba6] "
+      >
+       Voir la liste des rapports 
+      </Link>
+      </div>
     </div>
   );
 };
