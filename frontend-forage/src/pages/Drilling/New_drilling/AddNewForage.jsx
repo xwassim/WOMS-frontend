@@ -1,16 +1,43 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FiArrowLeft } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
+
+import axios from "axios";
 
 const AddNewForage = () => {
-  const [wellName, setWellName] = useState('');
-  const [siteName, setSiteName] = useState('');
-  const [progress, setProgress] = useState(0);
 
-  const handleSubmit = (e) => {
+  const navigate = useNavigate();
+
+  const [wellName, setWellName] = useState('');
+  const [location, setLocation] = useState('');
+  const [progress, setProgress] = useState(0);
+  const [plannedEndDate, setPlannedEndDate] = useState("");
+  const [startDate, setStartDate] = useState((new Date().toISOString().split('T')[0]));
+
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    const payload = {
+      wellName:wellName, // à ajouter dans le modèle backend si ce n’est pas encore fait
+      location:location,
+      progress:progress,
+      startDate:startDate,
+      plannedEndDate:plannedEndDate, // à remplacer dynamiquement
+      status: "On going", // ou selon un champ à ajouter
+      totalCost: 0,
+      type: "Pétrolier" // temporaire, ou à faire saisir
+    };
+    try {
+      const response = await axios.post("http://localhost:9090/api/drillwells", payload);
+      console.log("Forage ajouté :", response.data);
+      navigate('/operator-view');
+      // Redirection ou message de succès
+    } catch (error) {
+      console.error("Erreur lors de l'ajout du forage :", error);
+      // Gérer l'affichage d'une erreur
+    }
     // Handle form submission
-    console.log({ wellName, siteName, progress });
   };
 
   return (
@@ -40,8 +67,8 @@ const AddNewForage = () => {
             <input
               type="text"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={siteName}
-              onChange={(e) => setSiteName(e.target.value)}
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
               placeholder="ABCD"
             />
           </div>
@@ -65,12 +92,22 @@ const AddNewForage = () => {
         <div className="mb-6">
           <label className="block text-gray-700 mb-1">Date de creation</label>
           <input
-            type="text"
+            type="date"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value="22/22/2022"
-            readOnly
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
           />
         </div>
+
+        <div className="mb-6">
+          <label className="block text-gray-700 mb-1">Date de fin prévue</label>
+          <input
+            type="date"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={plannedEndDate}
+            onChange={(e) => setPlannedEndDate(e.target.value)}
+          />
+        </div>        
 
         <div className="mb-6">
           <label className="block text-gray-700 mb-1">Ajouter le planning prévisionnel</label>

@@ -1,10 +1,13 @@
-import { useNavigate } from "react-router-dom";
-import data from "../../../data/data";
+import { useNavigate  } from "react-router-dom";
+import axios from "axios";
+
+
 
 // Composant pour la soumission de fichier Excel
-import React, { useState, useRef } from "react";
+import React, { useState, useRef ,useEffect} from "react";
 
 const ExcelSubmission = ({ well, onCancel }) => {
+
   const [file, setFile] = useState(null);
   const [problems, setProblems] = useState([]);
   const [currentProblem, setCurrentProblem] = useState({
@@ -121,16 +124,21 @@ const ExcelSubmission = ({ well, onCancel }) => {
 
     try {
       // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("drillWellId", well.id);
+      const response = await axios.post(
+        "http://localhost:9090/api/daily-reports/import", // Modifie si besoin
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
-      const reportData = {
-        wellId: well.id,
-        fileName: file.name,
-        problems: noProblems ? [] : problems,
-        submissionDate: new Date().toISOString(),
-      };
 
-      console.log("Report submitted:", reportData);
+      console.log("Report submitted:", response.data);
       showMessage("Rapport soumis avec succès!", "success");
 
       // Reset form after successful submission
@@ -142,7 +150,7 @@ const ExcelSubmission = ({ well, onCancel }) => {
       }, 1500);
     } catch (error) {
       console.error("Submission error:", error);
-      showMessage("Erreur lors de la soumission: " + error.message, "error");
+      showMessage("Erreur lors de la soumission: " + (error.response?.data || error.message), "error");
     }
   };
 
@@ -657,40 +665,84 @@ const ExcelSubmission = ({ well, onCancel }) => {
 // Composant principal
 const ReportSubmission = () => {
   const navigate = useNavigate();
+  const [drillWells,setDrillWells] = useState([]);
+  
+  
+  useEffect(() => {
+    axios.get("http://localhost:9090/api/drillwells")
+      .then((response) => {
+        setDrillWells(response.data);
+      })
+      .catch((error) => {
+        console.error("Erreur lors du chargement des forages :", error);
+      });
+  }, []);
+
   const [selectedWell, setSelectedWell] = useState(null);
   const [submissionMethod, setSubmissionMethod] = useState(null); // null | 'form' | 'excel'
   const [newReport, setNewReport] = useState(null);
 
   // Filtrer les puits non complétés
-  const uncompletedWells = data.drillWells.filter((well) =>
-    well.phases.some((phase) => phase.status !== "completed-good")
-  );
+
 
   const handleWellSelection = (wellId) => {
-    const well = data.drillWells.find((w) => w.id === Number(wellId));
+    const well = drillWells.find((w) => w.id === Number(wellId));
     setSelectedWell(well);
   };
 
+
+  const handleSaveReport = async () => {
+    try {
+      // Formater le champ `progress` (ex: "50 ft en 10 h")
+      const formattedProgress = `${newReport.progress} ft en ${newReport.timeSpent} h`;
+
+      // Formater les entrées de `workDone` en string (ex: "08:00 - 10:00: Forage phase 1")
+      const formattedWorkDone = newReport.workDone.map((entry) => {
+        const start = entry.startTime || "";
+        const end = entry.endTime || "";
+        const desc = entry.description || "";
+        return `${start} - ${end}: ${desc}`;
+      });
+
+      // Créer l'objet final à envoyer
+      const payload = {
+        ...newReport,
+        progress: formattedProgress,
+        workDone: formattedWorkDone,
+      };
+
+      const response = await axios.post(
+        `http://localhost:9090/api/daily-reports/well/${selectedWell.id}`,
+        payload
+      );
+
+      console.log("Rapport ajouté :", response.data);
+      navigate("/operator-view");
+    } catch (error) {
+      console.error("Erreur lors de l'envoi du rapport :", error);
+      alert("Erreur lors de l'envoi du rapport");
+    }
+  };
+
+
   const initializeNewReport = () => {
     // Prendre la première phase non complétée par défaut
-    const defaultPhase = selectedWell.phases.find(
-      (phase) => phase.status !== "completed-good"
-    );
+
 
     setNewReport({
       id: null,
-      date: new Date().toISOString().split("T")[0],
-      depth: defaultPhase?.plannedDepth || 0,
-      progress: 0,
-      timeSpent: 0,
-      operations: [{ startTime: "", endTime: "", description: "" }],
-      formation: "",
+      reportDate: new Date().toISOString().split("T")[0],
+      depth:  "",
+      progress: "",
+      
+      timeSpent:"",
+      workDone: [{ startTime: "", endTime: "", description: "" }],
       dailyCost: 0,
-      equipmentUsed: [],
-      planned_day: 1,
-      actual_day: 1,
+
+      plannedDay: 0,
+      actualDay: 0,
       problems: [],
-      phaseId: defaultPhase?.id || null,
+      phaseName:  "",
     });
   };
 
@@ -701,22 +753,20 @@ const ReportSubmission = () => {
 
         <div className="mb-6 w-2/3">
           <h2 className="text-lg  mb-3">Sélectionnez un puit</h2>
-          {uncompletedWells.length === 0 ? (
-            <p className="text-gray-500">Aucun puits non complété disponible</p>
-          ) : (
+          
             <select
               onChange={(e) => handleWellSelection(e.target.value)}
               className="w-full p-3 border rounded-lg"
               value=""
             >
               <option value="">Sélectionner un puits</option>
-              {uncompletedWells.map((well) => (
+              {drillWells.map((well) => (
                 <option key={well.id} value={well.id}>
-                  {well.name} - {well.location}
+                   {well.wellName} - {well.location}
                 </option>
               ))}
             </select>
-          )}
+          
         </div>
       </div>
     );
@@ -815,11 +865,7 @@ const ReportSubmission = () => {
         </div>
         <div className="space-x-2">
           <button
-            onClick={() => {
-              // Logique de sauvegarde
-              console.log("Rapport soumis:", newReport);
-              navigate("/rapports");
-            }}
+            onClick={handleSaveReport}
             className="bg-[#10B981] hover:bg-[#2ea880] text-white px-4 py-1.5 rounded-md"
           >
             Sauvegarder
@@ -837,15 +883,15 @@ const ReportSubmission = () => {
         <div className="mt-2 grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-gray-100 p-3 rounded-lg">
             <p className="text-sm text-gray-600">Nom du puits</p>
-            <p className="font-semibold">{selectedWell.name}</p>
+            <p className="font-semibold">{selectedWell.wellName}</p>
           </div>
           <div className="bg-gray-100 p-3 rounded-lg">
             <p className="text-sm text-gray-600">Date</p>
             <input
               type="date"
-              value={newReport.date}
+              value={newReport.reportDate}
               onChange={(e) =>
-                setNewReport({ ...newReport, date: e.target.value })
+                setNewReport({ ...newReport, reportDate: e.target.value })
               }
               className="font-semibold w-full p-1 border rounded-md"
             />
@@ -866,7 +912,7 @@ const ReportSubmission = () => {
             <p className="text-sm text-gray-600">Progression</p>
             <div className="flex space-x-2">
               <input
-                type="number"
+                type="text"
                 value={newReport.progress}
                 onChange={(e) =>
                   setNewReport({ ...newReport, progress: e.target.value })
@@ -874,9 +920,9 @@ const ReportSubmission = () => {
                 className="font-semibold w-1/2 p-1 border rounded-md"
                 placeholder="Progression"
               />
-              <span className="self-center">en</span>
+              <span className="self-center">ft en</span>
               <input
-                type="number"
+                type="text"
                 value={newReport.timeSpent}
                 onChange={(e) =>
                   setNewReport({ ...newReport, timeSpent: e.target.value })
@@ -884,6 +930,7 @@ const ReportSubmission = () => {
                 className="font-semibold w-1/2 p-1 border rounded-md"
                 placeholder="Heures"
               />
+               <span className="self-center">h</span>
             </div>
           </div>
         </div>
@@ -897,8 +944,8 @@ const ReportSubmission = () => {
             onClick={() => {
               setNewReport((prev) => ({
                 ...prev,
-                operations: [
-                  ...prev.operations,
+                workDone: [
+                  ...prev.workDone,
                   { startTime: "", endTime: "", description: "" },
                 ],
               }));
@@ -927,16 +974,16 @@ const ReportSubmission = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {newReport.operations.map((op, index) => (
+              {newReport.workDone.map((op, index) => (
                 <tr key={index}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <input
                       type="time"
                       value={op.startTime || ""}
                       onChange={(e) => {
-                        const updatedOps = [...newReport.operations];
+                        const updatedOps = [...newReport.workDone];
                         updatedOps[index].startTime = e.target.value;
-                        setNewReport({ ...newReport, operations: updatedOps });
+                        setNewReport({ ...newReport, workDone: updatedOps });
                       }}
                       className="text-sm w-full p-1 border rounded-md"
                     />
@@ -946,9 +993,9 @@ const ReportSubmission = () => {
                       type="time"
                       value={op.endTime || ""}
                       onChange={(e) => {
-                        const updatedOps = [...newReport.operations];
+                        const updatedOps = [...newReport.workDone];
                         updatedOps[index].endTime = e.target.value;
-                        setNewReport({ ...newReport, operations: updatedOps });
+                        setNewReport({ ...newReport, workDone: updatedOps });
                       }}
                       className="text-sm w-full p-1 border rounded-md "
                     />
@@ -958,9 +1005,9 @@ const ReportSubmission = () => {
                       type="text"
                       value={op.description}
                       onChange={(e) => {
-                        const updatedOps = [...newReport.operations];
+                        const updatedOps = [...newReport.workDone];
                         updatedOps[index].description = e.target.value;
-                        setNewReport({ ...newReport, operations: updatedOps });
+                        setNewReport({ ...newReport, workDone: updatedOps });
                       }}
                       className="text-sm w-full px-1 py-2 border rounded-md  "
                       placeholder="Description de l'opération"
@@ -969,13 +1016,13 @@ const ReportSubmission = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-right ">
                     <button
                       onClick={() => {
-                        const updatedOps = newReport.operations.filter(
+                        const updatedOps = newReport.workDone.filter(
                           (_, i) => i !== index
                         );
-                        setNewReport({ ...newReport, operations: updatedOps });
+                        setNewReport({ ...newReport, workDone: updatedOps });
                       }}
                       className="text-white hover:bg-red-700 text-sm cursor-pointer ring-2 rounded-sm px-2 py-1 ring-red-500 hover:ring-red-700 bg-red-500"
-                      disabled={newReport.operations.length === 1}
+                      disabled={newReport.workDone.length === 1}
                     >
                       Supprimer
                     </button>
@@ -1003,17 +1050,17 @@ const ReportSubmission = () => {
           <div className="bg-blue-50 p-4 rounded-lg">
             <h3 className="font-semibold text-blue-800 mb-2">Phase</h3>
             <select
-              value={newReport.phase}
+              value={newReport.phaseName}
               onChange={(e) =>
-                setNewReport({ ...newReport, phase: e.target.value })
+                setNewReport({ ...newReport, phaseName: e.target.value })
               }
               className="w-full px-1 py-1.5 border rounded-md text-gray-800"
             >
               <option value="">Sélectionner une phase</option>
-              <option value="Phase 26">Phase 26" x 20" inchs</option>
-              <option value="Phase 16">Phase 16" x 13" inchs</option>
-              <option value="Phase 12">Phase 12" x 9" inchs</option>
-              <option value="Phase 8">Phase 8" x 7" inchs</option>
+              <option value="Phase 26 x 20 ">Phase 26" x 20" inchs</option>
+              <option value="Phase 16 x 13">Phase 16" x 13" inchs</option>
+              <option value="Phase 12 x 9">Phase 12" x 9" inchs</option>
+              <option value="Phase 8 x 7">Phase 8" x 7" inchs</option>
               <option value="Others">Autres</option>
             </select>
           </div>
@@ -1036,9 +1083,9 @@ const ReportSubmission = () => {
               Jour prévu :{" "}
               <input
                 type="number"
-                value={newReport.planned_day}
+                value={newReport.plannedDay}
                 onChange={(e) =>
-                  setNewReport({ ...newReport, planned_day: e.target.value })
+                  setNewReport({ ...newReport, plannedDay: e.target.value })
                 }
                 className="text-gray-800 font-normal text-sm w-16 px-1 py-1.5 border rounded-md ml-1"
               />
@@ -1047,9 +1094,9 @@ const ReportSubmission = () => {
               Jour réel :{" "}
               <input
                 type="number"
-                value={newReport.actual_day}
+                value={newReport.actualDay}
                 onChange={(e) =>
-                  setNewReport({ ...newReport, actual_day: e.target.value })
+                  setNewReport({ ...newReport, actualDay: e.target.value })
                 }
                 className="text-gray-800 font-normal text-sm w-16 px-1 py-1.5 border rounded-md ml-1"
               />
