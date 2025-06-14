@@ -10,6 +10,13 @@ const ExcelSubmission = ({ well, onCancel }) => {
 
   const [file, setFile] = useState(null);
   const [problems, setProblems] = useState([]);
+  const [excelProblems, setExcelProblems] = useState([]);
+  const [selectedProblemInfo, setSelectedProblemInfo] = useState({
+    type: "",
+    severity: "",
+    description: "",
+    isPredefined: false
+  });
   const [currentProblem, setCurrentProblem] = useState({
     type: "",
     severity: "",
@@ -96,18 +103,34 @@ const ExcelSubmission = ({ well, onCancel }) => {
       return;
     }
 
-    setProblems((prev) => [...prev, { ...currentProblem, id: Date.now() }]);
+    const newProblem = { ...currentProblem, id: Date.now() };
+    setProblems((prev) => [...prev, newProblem]);
+    
+    // Ajouter le problème à la liste des problèmes Excel
+    const excelProblem = {
+      description: currentProblem.description,
+      gravite: currentProblem.severity === "Critique" ? 3 : 
+              currentProblem.severity === "Moyenne" ? 2 : 1,
+      type: currentProblem.type,
+      solutions: currentProblem.solution ? [currentProblem.solution] : []
+    };
+    setExcelProblems((prev) => [...prev, excelProblem]);
+
     setCurrentProblem({
       type: "",
       severity: "",
       description: "",
       solution: "",
+      isPredefined: false,
+      predefinedId: null
     });
     showMessage("Problème ajouté au rapport");
   };
 
   const handleRemoveProblem = (id) => {
     setProblems((prev) => prev.filter((problem) => problem.id !== id));
+    // Supprimer également de la liste des problèmes Excel
+    setExcelProblems((prev) => prev.filter((_, index) => problems[index]?.id !== id));
     showMessage("Problème supprimé");
   };
 
@@ -123,12 +146,11 @@ const ExcelSubmission = ({ well, onCancel }) => {
     setFormStatus({ isSubmitting: true, isSuccess: false, message: "" });
 
     try {
-      // Simulate API call
       const formData = new FormData();
       formData.append("file", file);
       formData.append("drillWellId", well.id);
       const response = await axios.post(
-        "http://localhost:9090/api/daily-reports/import", // Modifie si besoin
+        "http://localhost:9090/api/daily-reports/import",
         formData,
         {
           headers: {
@@ -137,14 +159,59 @@ const ExcelSubmission = ({ well, onCancel }) => {
         }
       );
 
+      console.log("Réponse complète du serveur:", response);
+      console.log("Données du rapport:", response.data);
+      const savedReport = response.data;
+      console.log("savedReport", savedReport[0]);
+      // Vérifier si nous avons un ID valide
+      
 
-      console.log("Report submitted:", response.data);
-      showMessage("Rapport soumis avec succès!", "success");
+      // Sauvegarder chaque problème dans la base de données
+      for (const problem of excelProblems) {
+        try {
+          const problemPayload = {
+            name: problem.description,
+            type: problem.type,
+            gravite: problem.gravite,
+            solutions: problem.solutions,
+            dailyReport: {
+              id: savedReport[0].id
+            }
+          };
 
-      // Reset form after successful submission
+          console.log("ID du rapport journalier:", savedReport.id);
+          console.log("Problème à envoyer:", JSON.stringify(problemPayload, null, 2));
+          console.log("Problème original:", problem);
+
+          const response = await axios.post(
+            "http://localhost:9090/api/problemes",
+            problemPayload,
+            {
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+          console.log("Réponse du serveur:", response.data);
+          console.log("Problème ajouté avec succès");
+        } catch (error) {
+          console.error("Erreur lors de l'ajout du problème:", error);
+          console.error("Détails de l'erreur:", {
+            status: error.response?.status,
+            data: error.response?.data,
+            headers: error.response?.headers
+          });
+          showMessage("Erreur lors de l'ajout d'un problème: " + error.message, "error");
+        }
+      }
+
+      showMessage("Rapport et problèmes soumis avec succès!", "success");
+
+      // Réinitialiser le formulaire après la soumission réussie
       setTimeout(() => {
         setFile(null);
         setProblems([]);
+        setExcelProblems([]);
         setNoProblems(false);
         if (fileInputRef.current) fileInputRef.current.value = "";
       }, 1500);
@@ -210,6 +277,43 @@ const ExcelSubmission = ({ well, onCancel }) => {
       ],
     },
   ];
+
+  const handleProblemSelection = (problemId) => {
+    if (problemId === 'other') {
+      setSelectedProblemInfo({
+        type: "",
+        severity: "",
+        description: "",
+        isPredefined: false
+      });
+      setCurrentProblem({
+        type: "",
+        severity: "",
+        description: "",
+        solution: "",
+        isPredefined: false,
+        predefinedId: null
+      });
+    } else if (problemId) {
+      const selectedProblem = predefinedProblems.find(p => p.id.toString() === problemId);
+      if (selectedProblem) {
+        setSelectedProblemInfo({
+          type: selectedProblem.type,
+          severity: selectedProblem.severity,
+          description: selectedProblem.description,
+          isPredefined: true
+        });
+        setCurrentProblem({
+          type: selectedProblem.type,
+          severity: selectedProblem.severity,
+          description: selectedProblem.description,
+          solution: selectedProblem.solutions[0] || '',
+          isPredefined: true,
+          predefinedId: selectedProblem.id
+        });
+      }
+    }
+  };
 
   return (
     <div className="bg-white rounded-lg shadow p-6 mx-auto ">
@@ -359,40 +463,7 @@ const ExcelSubmission = ({ well, onCancel }) => {
         </label>
         <select
           value={currentProblem.predefinedId || ''}
-          onChange={(e) => {
-            const selectedId = e.target.value;
-            if (selectedId === 'other') {
-              setCurrentProblem({
-                type: '',
-                severity: '',
-                description: '',
-                solution: '',
-                isPredefined: false,
-                predefinedId: null
-              });
-            } else if (selectedId) {
-              const selectedProblem = predefinedProblems.find(p => p.id.toString() === selectedId);
-              if (selectedProblem) {
-                setCurrentProblem({
-                  type: selectedProblem.type,
-                  severity: selectedProblem.severity,
-                  description: selectedProblem.description,
-                  solution: selectedProblem.solutions[0] || '',
-                  isPredefined: true,
-                  predefinedId: selectedProblem.id
-                });
-              }
-            } else {
-              setCurrentProblem({
-                type: '',
-                severity: '',
-                description: '',
-                solution: '',
-                isPredefined: false,
-                predefinedId: null
-              });
-            }
-          }}
+          onChange={(e) => handleProblemSelection(e.target.value)}
           className="w-full border border-gray-300 rounded-md p-2 text-sm"
         >
           <option value="">-- Sélectionner un problème --</option>
@@ -666,7 +737,7 @@ const ExcelSubmission = ({ well, onCancel }) => {
 const ReportSubmission = () => {
   const navigate = useNavigate();
   const [drillWells,setDrillWells] = useState([]);
-  
+  const [problems, setProblems] = useState([]);
   
   useEffect(() => {
     axios.get("http://localhost:9090/api/drillwells")
@@ -693,10 +764,7 @@ const ReportSubmission = () => {
 
   const handleSaveReport = async () => {
     try {
-      // Formater le champ `progress` (ex: "50 ft en 10 h")
       const formattedProgress = `${newReport.progress} ft en ${newReport.timeSpent} h`;
-
-      // Formater les entrées de `workDone` en string (ex: "08:00 - 10:00: Forage phase 1")
       const formattedWorkDone = newReport.workDone.map((entry) => {
         const start = entry.startTime || "";
         const end = entry.endTime || "";
@@ -704,7 +772,6 @@ const ReportSubmission = () => {
         return `${start} - ${end}: ${desc}`;
       });
 
-      // Créer l'objet final à envoyer
       const payload = {
         ...newReport,
         progress: formattedProgress,
@@ -715,8 +782,32 @@ const ReportSubmission = () => {
         `http://localhost:9090/api/daily-reports/well/${selectedWell.id}`,
         payload
       );
+      const savedReport = response.data;
+      console.log("Rapport ajouté :", savedReport);
 
-      console.log("Rapport ajouté :", response.data);
+      
+      for (const problem of problems) {
+        try {
+          const problemPayload = {
+            name: problem.name,
+            type: problem.type,
+            gravite: problem.severity,
+            solutions: problem.solutions,
+            dailyReport: {
+              id: savedReport.id
+            }
+          };
+
+          await axios.post(
+            "http://localhost:9090/api/problemes",
+            problemPayload
+          );
+          console.log("Problème ajouté avec succès");
+        } catch (error) {
+          console.error("Erreur lors de l'ajout du problème:", error);
+        }
+      }
+
       navigate("/operator-view");
     } catch (error) {
       console.error("Erreur lors de l'envoi du rapport :", error);
@@ -726,24 +817,19 @@ const ReportSubmission = () => {
 
 
   const initializeNewReport = () => {
-    // Prendre la première phase non complétée par défaut
-
-
     setNewReport({
       id: null,
       reportDate: new Date().toISOString().split("T")[0],
       depth:  "",
       progress: "",
-      
       timeSpent:"",
       workDone: [{ startTime: "", endTime: "", description: "" }],
       dailyCost: 0,
-
       plannedDay: 0,
       actualDay: 0,
-      problems: [],
       phaseName:  "",
     });
+    setProblems([]);
   };
 
   if (!selectedWell) {
@@ -1111,18 +1197,12 @@ const ReportSubmission = () => {
           <h2 className="text-lg ">Problemes signalés</h2>
           <button
             onClick={() => {
-              setNewReport((prev) => ({
-                ...prev,
-                problems: [
-                  ...prev.problems,
-                  {
-                    name: "",
-                    type: "",
-                    severity: 1,
-                    solutions: [""],
-                  },
-                ],
-              }));
+              setProblems(prev => [...prev, {
+                name: "",
+                type: "",
+                severity: 1,
+                solutions: [""],
+              }]);
             }}
             className="bg-[#445aff] hover:bg-[#3C50E0] text-white px-3 py-2 rounded-md text-sm"
           >
@@ -1130,7 +1210,7 @@ const ReportSubmission = () => {
           </button>
         </div>
         <div className="space-y-3">
-          {newReport.problems.map((problem, index) => (
+          {problems.map((problem, index) => (
             <div key={index} className="bg-red-50 p-3 rounded-lg">
               <div className="space-y-2">
                 <div>
@@ -1141,9 +1221,9 @@ const ReportSubmission = () => {
                     type="text"
                     value={problem.name}
                     onChange={(e) => {
-                      const updatedProblems = [...newReport.problems];
+                      const updatedProblems = [...problems];
                       updatedProblems[index].name = e.target.value;
-                      setNewReport({ ...newReport, problems: updatedProblems });
+                      setProblems(updatedProblems);
                     }}
                     className="w-full px-1 py-2 border rounded-md"
                   />
@@ -1155,12 +1235,9 @@ const ReportSubmission = () => {
                       type="text"
                       value={problem.type}
                       onChange={(e) => {
-                        const updatedProblems = [...newReport.problems];
+                        const updatedProblems = [...problems];
                         updatedProblems[index].type = e.target.value;
-                        setNewReport({
-                          ...newReport,
-                          problems: updatedProblems,
-                        });
+                        setProblems(updatedProblems);
                       }}
                       className="w-full px-1 py-2 border rounded-md"
                     />
@@ -1170,12 +1247,9 @@ const ReportSubmission = () => {
                     <select
                       value={problem.severity}
                       onChange={(e) => {
-                        const updatedProblems = [...newReport.problems];
+                        const updatedProblems = [...problems];
                         updatedProblems[index].severity = e.target.value;
-                        setNewReport({
-                          ...newReport,
-                          problems: updatedProblems,
-                        });
+                        setProblems(updatedProblems);
                       }}
                       className="w-full px-1 py-2 border rounded-md"
                     >
@@ -1193,12 +1267,9 @@ const ReportSubmission = () => {
                     <button
                       onClick={(e) => {
                         e.preventDefault();
-                        const updatedProblems = [...newReport.problems];
+                        const updatedProblems = [...problems];
                         updatedProblems[index].solutions.push("");
-                        setNewReport({
-                          ...newReport,
-                          problems: updatedProblems,
-                        });
+                        setProblems(updatedProblems);
                       }}
                       className="text-blue-500 hover:text-blue-700 text-sm font-medium underline"
                     >
@@ -1211,13 +1282,9 @@ const ReportSubmission = () => {
                         type="text"
                         value={solution}
                         onChange={(e) => {
-                          const updatedProblems = [...newReport.problems];
-                          updatedProblems[index].solutions[solIndex] =
-                            e.target.value;
-                          setNewReport({
-                            ...newReport,
-                            problems: updatedProblems,
-                          });
+                          const updatedProblems = [...problems];
+                          updatedProblems[index].solutions[solIndex] = e.target.value;
+                          setProblems(updatedProblems);
                         }}
                         className="w-full px-1 py-2 border rounded-md"
                       />
@@ -1225,19 +1292,12 @@ const ReportSubmission = () => {
                         onClick={(e) => {
                           e.preventDefault();
                           if (problem.solutions.length <= 1) return;
-                          const updatedProblems = [...newReport.problems];
-                          updatedProblems[index].solutions = updatedProblems[
-                            index
-                          ].solutions.filter((_, i) => i !== solIndex);
-                          setNewReport({
-                            ...newReport,
-                            problems: updatedProblems,
-                          });
+                          const updatedProblems = [...problems];
+                          updatedProblems[index].solutions = updatedProblems[index].solutions.filter((_, i) => i !== solIndex);
+                          setProblems(updatedProblems);
                         }}
                         className={`ml-2 text-red-500 hover:text-red-700 ${
-                          problem.solutions.length === 1
-                            ? "opacity-50 cursor-not-allowed"
-                            : ""
+                          problem.solutions.length === 1 ? "opacity-50 cursor-not-allowed" : ""
                         }`}
                         disabled={problem.solutions.length === 1}
                       >
@@ -1248,10 +1308,8 @@ const ReportSubmission = () => {
                 </div>
                 <button
                   onClick={() => {
-                    const updatedProblems = newReport.problems.filter(
-                      (_, i) => i !== index
-                    );
-                    setNewReport({ ...newReport, problems: updatedProblems });
+                    const updatedProblems = problems.filter((_, i) => i !== index);
+                    setProblems(updatedProblems);
                   }}
                   className="text-red-500 hover:text-red-700 text-sm font-medium underline"
                 >
