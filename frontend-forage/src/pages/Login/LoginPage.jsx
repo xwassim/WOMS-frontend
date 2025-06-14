@@ -1,18 +1,67 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import logo from "../../assets/Sonatrach.png";
 import sideImg from "../../assets/pic.svg"; // Assuming you have a side image
 
 const LoginPage = () => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
+  const [motDePasse, setmotDePasse] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simple validation
-    if (username && password) {
-      navigate("/");
+    setError("");
+    setIsLoading(true);
+
+    const loginData = {
+      email,
+      motDePasse,
+    };
+
+    console.log("Tentative de connexion avec:", loginData);
+
+    try {
+      const response = await axios.post("http://localhost:9090/api/users/login", loginData, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        timeout: 5000, // Timeout de 5 secondes
+        withCredentials: true // Important pour CORS
+      });
+
+      console.log("Réponse du serveur:", response.data);
+
+      if (response.data) {
+        if (response.data.token) {
+          localStorage.setItem("token", response.data.token);
+        }
+        navigate("/");
+      }
+    } catch (err) {
+      console.error("Erreur complète:", err);
+      
+      if (err.code === 'ERR_NETWORK') {
+        setError("Impossible de se connecter au serveur. Veuillez vérifier que le serveur backend est démarré sur le port 9090.");
+      } else if (err.response) {
+        // Le serveur a répondu avec un code d'erreur
+        if (err.response.status === 403) {
+          setError("Accès refusé. Vérifiez vos identifiants.");
+        } else {
+          setError(err.response.data.message || "Erreur de connexion");
+        }
+      } else if (err.request) {
+        // La requête a été faite mais aucune réponse n'a été reçue
+        setError("Pas de réponse du serveur. Vérifiez que le serveur est en cours d'exécution.");
+      } else {
+        // Une erreur s'est produite lors de la configuration de la requête
+        setError("Erreur lors de l'envoi de la requête: " + err.message);
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -27,42 +76,47 @@ const LoginPage = () => {
             <img src={logo} alt="logo" className="mx-auto" />
 
           </div>
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+              <span className="block sm:inline">{error}</span>
+            </div>
+          )}
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             <div className="rounded-md shadow-sm space-y-4">
               <div>
                 <label
-                  htmlFor="username"
+                  htmlFor="email"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Identifiant
+                  Email
                 </label>
                 <input
-                  id="username"
-                  name="username"
-                  type="text"
+                  id="email"
+                  name="email"
+                  type="email"
                   required
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="identifiant"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Votre email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div>
                 <label
-                  htmlFor="password"
+                  htmlFor="motDePasse"
                   className="block text-sm font-medium text-gray-700"
                 >
                   Mot de passe
                 </label>
                 <input
-                  id="password"
-                  name="password"
+                  id="motDePasse"
+                  name="motDePasse"
                   type="password"
                   required
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enterer votre mot de passe"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Entrez votre mot de passe"
+                  value={motDePasse}
+                  onChange={(e) => setmotDePasse(e.target.value)}
                 />
               </div>
             </div>
@@ -70,9 +124,10 @@ const LoginPage = () => {
             <div>
               <button
                 type="submit"
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                disabled={isLoading}
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300"
               >
-                Se Connecter
+                {isLoading ? "Connexion en cours..." : "Se Connecter"}
               </button>
             </div>
           </form>
