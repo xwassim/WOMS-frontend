@@ -3,10 +3,10 @@ import React from 'react';
 const GaugeChart = ({ value, color, size = 200 }) => {
   // Calculate the SVG parameters
   const viewBoxSize = 100;
-  const radius = 40;
+  const radius = 42;
   const circumference = 2 * Math.PI * radius;
-  const startAngle = -110;
-  const endAngle = 110;
+  const startAngle = 0;
+  const endAngle = 180;
   const angleRange = endAngle - startAngle;
   const svgProgress = (value / 100) * angleRange;
   const progressAngle = startAngle + svgProgress;
@@ -35,11 +35,10 @@ const GaugeChart = ({ value, color, size = 200 }) => {
   // Background arc (gray)
   const backgroundArc = createArc(startAngle, endAngle);
   
-  // Progress arc (colored)
-  const progressArc = createArc(startAngle, progressAngle);
-  
+const cappedProgressAngle = Math.min(progressAngle, 180);
+const progressArc = createArc(startAngle, cappedProgressAngle);
   return (
-    <div className="relative" style={{ width: size, height: size }}>
+    <div className="relative " style={{ width: size, height: 130 }}>
       <svg 
         viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`}
         width={size}
@@ -67,8 +66,8 @@ const GaugeChart = ({ value, color, size = 200 }) => {
       </svg>
       
       {/* Percentage Text */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-3xl font-bold">{value}%</span>
+      <div className="absolute top-10 inset-0 flex items-center justify-center">
+        <span className="text-2xl font-bold">{value}%</span>
       </div>
     </div>
   );

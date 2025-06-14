@@ -30,14 +30,14 @@ const SubmissionSuccess = () => {
       </div> */}
 <div className='flex flex-row justify-center space-x-4'>
       <Link
-        to="/operator-view"
+        to="/"
         className="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-gray-800 bg-gray-300 hover:bg-gray-400 "
       >
         Retour à la page d'accueil
       </Link>
       
       <Link
-        to="/operator-view"
+        to="/"
         className="mt-6 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#3C50E0] hover:bg-[#2c3ba6] "
       >
        Voir la liste des rapports 

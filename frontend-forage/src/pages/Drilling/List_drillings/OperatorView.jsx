@@ -43,14 +43,12 @@ const OperatorView = () => {
       status: well.status,
       statusColor: getStatusColor(well.status),
       progress: well.progress,
-      // You can add more fields from your data.js if needed
       totalCost: well.totalCost,
       delay: well.delay,
       location: well.location,
     }))
   );
 
-  // Helper function to determine status color
   function getStatusColor(status) {
     switch (status) {
       case "On going":
@@ -72,11 +70,20 @@ const OperatorView = () => {
   useEffect(() => {
     let results = drillingSites;
 
-    // Apply search filter
+    // Improved search filter
     if (searchTerm.trim() !== "") {
+      const searchLower = searchTerm.toLowerCase();
       results = results.filter((site) => {
-        return Object.values(site).some((val) =>
-          val.toString().toLowerCase().includes(searchTerm.toLowerCase())
+        const searchableFields = [
+          site.wellName,
+          site.siteName,
+          site.status,
+          site.location,
+          site.id.toString()
+        ];
+        
+        return searchableFields.some(
+          field => field && field.toString().toLowerCase().includes(searchLower)
         );
       });
     }
@@ -122,10 +129,10 @@ const OperatorView = () => {
     }
 
     setFilteredSites(results);
-    setCurrentPage(1); // Reset to first page when filters change
+    setCurrentPage(1);
   }, [searchTerm, statusFilter, progressFilter, dateRange, drillingSites]);
 
-  // Pagination calculations
+  // Rest of your component remains the same...
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredSites.slice(indexOfFirstItem, indexOfLastItem);
@@ -150,12 +157,10 @@ const OperatorView = () => {
   };
 
   return (
-    <div className="p-6 font-dm-sans bg-white rounded-lg shadow-lg relative ">
+    <div className="p-6 font-dm-sans bg-white rounded-lg shadow-lg relative">
       {/* Header with title, search and pagination controls */}
       <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
-        <h1 className="text-2xl  text-[#4C506B]">
-          Liste des sites de forages
-        </h1>
+        <h1 className="text-2xl text-[#4C506B]">Liste des sites de forages</h1>
 
         <div className="flex items-center space-x-4 flex-wrap justify-end gap-4">
           {/* Search Input */}
@@ -194,7 +199,7 @@ const OperatorView = () => {
       <div className="overflow-x-auto rounded-lg border border-[#e6e5e5] mb-4">
         <table className="min-w-full border-collapse">
           <thead>
-            <tr className="border-b-2 border-[#e4e4e4] bg-[#ececec] text-center text-xs font-medium text-gray-500 uppercase tracking-wider ">
+            <tr className="border-b-2 border-[#e4e4e4] bg-[#ececec] text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
               <th className="text-left py-3 px-4 rounded-tl-lg">Nom du Puit</th>
               <th className="text-left py-3 px-4">Nom du site</th>
               <th className="text-left py-3 px-4">Date de fin prevu</th>
@@ -208,9 +213,9 @@ const OperatorView = () => {
               currentItems.map((site) => (
                 <tr
                   key={site.id}
-                  className="border-b border-[#d5d5d5]  text-[#1C2434] hover:bg-[#F9FAFB]"
+                  className="border-b border-[#d5d5d5] text-[#1C2434] hover:bg-[#F9FAFB]"
                 >
-                  <td className="py-3 px-4 text-[#1C2434] ">{site.wellName}</td>
+                  <td className="py-3 px-4 text-[#1C2434]">{site.wellName}</td>
                   <td className="py-3 px-4 text-[#1C2434]">{site.siteName}</td>
                   <td className="py-3 px-4 text-[#1C2434]">
                     {formatDate(site.endDate)}
@@ -248,13 +253,13 @@ const OperatorView = () => {
                         Détails
                       </Link>
                       <Link
-                        to={`/planning`} // Updated to dynamic route
+                        to={`/planning`}
                         className="text-orange-600 hover:text-orange-800 underline"
                       >
                         Planning
                       </Link>
                       <Link
-                        to={`/well/${site.id}/reports`} // Updated to dynamic route
+                        to={`/well/${site.id}/reports`}
                         className="text-purple-600 hover:text-purple-800 underline"
                       >
                         Rapports

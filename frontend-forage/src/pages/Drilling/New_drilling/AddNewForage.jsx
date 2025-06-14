@@ -14,9 +14,9 @@ const AddNewForage = () => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6 max-w-2xl mx-auto">
+    <div className="bg-white rounded-lg shadow p-6 ">
       <div className="mb-6">
-        <Link to="/operator-view" className="flex items-center text-blue-600 hover:text-blue-800">
+        <Link to="/" className="flex items-center text-blue-600 hover:text-blue-800">
           <FiArrowLeft className="mr-1" /> Retour
         </Link>
       </div>

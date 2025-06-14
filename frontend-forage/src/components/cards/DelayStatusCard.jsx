@@ -4,39 +4,41 @@ import GaugeChart from '../charts/GaugeChart';
 
 const DelayStatusCard = ({ well }) => {
   // Calculate metrics
-  const totalDuration = well.totalDuration;
-  const plannedDuration = well.planning?.totalDuration;
-  const delayPercentage = Math.min(100, Math.round((totalDuration / plannedDuration) * 100));
+  const actualGlobalDuration = well.actualGlobalDuration;
+  const plannedGlobalDuration = well.planning?.plannedGlobalDuration;
+  const delayPercentage = Math.min( Math.round((actualGlobalDuration / plannedGlobalDuration) * 100));
   const delayDays = well.delay || 0;
   
-  // Determine color based on delay percentage
-  const getStatusColor = () => {
-    if (delayPercentage >= 90) return 'text-red-600';
-    if (delayPercentage >= 80) return 'text-amber-600';
-    return 'text-green-600';
-  };
+// Determine color based on delay percentage
+// - Green (text-green-500/#22c55e) for normal levels (<80%)
+// - Yellow (text-yellow-500/#eab308) for warning levels (80-89%)
+// - Red (text-red-500/#ef4444) for critical levels (≥90%)
+const getStatusColor = () => {
+  if (delayPercentage > 100) return 'text-red-500';    // #ef4444
+  if (delayPercentage >= 85 && delayPercentage < 100 ) return 'text-yellow-500'; // #eab308
+  return 'text-green-500';                             // #22c55e
+};
 
-  // Determine gauge color
-  const getGaugeColor = () => {
-    if (delayPercentage >= 90) return '#ef4444';
-    if (delayPercentage >= 80) return '#eab308';
-    return '#22c55e';
-  };
-
+// Determine gauge color (matches status color thresholds)
+const getGaugeColor = () => {
+  if (delayPercentage > 100) return '#ef4444';    // text-red-500
+  if (delayPercentage >= 85 && delayPercentage < 100 ) return '#eab308';    // text-yellow-500
+  return '#22c55e';                               // text-green-500
+};
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg">
-      <div className="flex justify-between items-center mb-4">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-md p-6 transition-all duration-300 hover:shadow-lg">
+      {/* <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold text-gray-800">Delay Status</h2>
         <Clock className="w-5 h-5 text-blue-600" />
-      </div>
+      </div> */}
       
-      <p className={`mb-4 ${getStatusColor()} font-medium`}>
+      <p className={` ${getStatusColor()} text-center font-medium`}>
         {delayDays > 0 
-          ? 'Schedule delay detected' 
-          : 'On schedule'}
+          ? 'Retard détécté'
+          : 'Dans les délais'}
       </p>
       
-      <div className="flex justify-center my-4">
+      <div className="flex justify-center ">
         <GaugeChart 
           value={delayPercentage} 
           color={getGaugeColor()}
@@ -44,22 +46,22 @@ const DelayStatusCard = ({ well }) => {
         />
       </div>
       
-      <div className="mt-4 flex justify-between text-sm text-gray-600">
-        <span>0d</span>
-        <span>{Math.round(plannedDuration * 0.5)}d</span>
-        <span>{plannedDuration}d</span>
+      <div className=" flex justify-between font-medium text-sm text-gray-600">
+        <span>0j</span>
+        <span>{Math.round(plannedGlobalDuration * 0.5)}j</span>
+        <span>{plannedGlobalDuration}j</span>
       </div>
       
-      <div className="mt-4 grid grid-cols-2 gap-2">
+      {/* <div className="mt-4 grid grid-cols-2 gap-2">
         <div className="bg-gray-50 p-3 rounded-lg">
           <p className="text-xs text-gray-500">Current Duration</p>
           <p className="text-lg font-semibold">{totalDuration} days</p>
         </div>
         <div className="bg-gray-50 p-3 rounded-lg">
           <p className="text-xs text-gray-500">Planned Duration</p>
-          <p className="text-lg font-semibold">{plannedDuration} days</p>
+          <p className="text-lg font-semibold">{plannedTotalDuration} days</p>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

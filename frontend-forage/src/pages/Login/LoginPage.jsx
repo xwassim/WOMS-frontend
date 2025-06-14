@@ -12,7 +12,7 @@ const LoginPage = () => {
     e.preventDefault();
     // Simple validation
     if (username && password) {
-      navigate("/operator-view");
+      navigate("/");
     }
   };
 

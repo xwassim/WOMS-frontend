@@ -1,8 +1,8 @@
+import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import data from "../../../data/data";
 
 // Composant pour la soumission de fichier Excel
-import React, { useState, useRef } from "react";
 
 const ExcelSubmission = ({ well, onCancel }) => {
   const [file, setFile] = useState(null);
@@ -11,7 +11,7 @@ const ExcelSubmission = ({ well, onCancel }) => {
     type: "",
     severity: "",
     description: "",
-    solution: "",
+    solution: " ", // Initialize with space to keep checkbox unchecked
     isPredefined: false,
     predefinedId: null,
   });
@@ -27,135 +27,6 @@ const ExcelSubmission = ({ well, onCancel }) => {
   // Constants
   const problemTypes = ["Technique", "Logistique", "Sécurité"];
   const severityLevels = ["Mineure", "Moyenne", "Critique"];
-
-  // Derived state
-  const isProblemComplete =
-    currentProblem.type &&
-    currentProblem.severity &&
-    currentProblem.description;
-  const canSubmit = file && (noProblems || problems.length > 0);
-
-  // Improved file validation
-  const isValidExcelFile = (file) => {
-    const validTypes = [
-      "application/vnd.ms-excel",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "application/octet-stream",
-    ];
-    const validExtensions = [".xls", ".xlsx"];
-    const extension = file.name
-      .substring(file.name.lastIndexOf("."))
-      .toLowerCase();
-
-    return (
-      validTypes.includes(file.type) || validExtensions.includes(extension)
-    );
-  };
-
-  // Handlers
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files?.[0];
-    if (!selectedFile) {
-      showMessage("Aucun fichier sélectionné", "error");
-      return;
-    }
-
-    if (selectedFile.size > 5 * 1024 * 1024) {
-      // 5MB limit
-      showMessage("Le fichier est trop volumineux (max 5MB)", "error");
-      return;
-    }
-
-    if (isValidExcelFile(selectedFile)) {
-      setFile(selectedFile);
-      showMessage("Fichier sélectionné avec succès");
-    } else {
-      showMessage(
-        "Veuillez sélectionner un fichier Excel valide (.xls, .xlsx)",
-        "error"
-      );
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  };
-
-  const handleRemoveFile = () => {
-    setFile(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
-  const handleProblemChange = (field, value) => {
-    setCurrentProblem((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleAddProblem = () => {
-    if (!isProblemComplete) {
-      showMessage("Veuillez compléter tous les champs du problème", "error");
-      return;
-    }
-
-    setProblems((prev) => [...prev, { ...currentProblem, id: Date.now() }]);
-    setCurrentProblem({
-      type: "",
-      severity: "",
-      description: "",
-      solution: "",
-    });
-    showMessage("Problème ajouté au rapport");
-  };
-
-  const handleRemoveProblem = (id) => {
-    setProblems((prev) => prev.filter((problem) => problem.id !== id));
-    showMessage("Problème supprimé");
-  };
-
-  const handleSubmit = async () => {
-    if (!canSubmit) {
-      showMessage(
-        'Veuillez ajouter un fichier et au moins un problème ou cocher "Aucun problème"',
-        "error"
-      );
-      return;
-    }
-
-    setFormStatus({ isSubmitting: true, isSuccess: false, message: "" });
-
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      const reportData = {
-        wellId: well.id,
-        fileName: file.name,
-        problems: noProblems ? [] : problems,
-        submissionDate: new Date().toISOString(),
-      };
-
-      console.log("Report submitted:", reportData);
-      showMessage("Rapport soumis avec succès!", "success");
-
-      // Reset form after successful submission
-      setTimeout(() => {
-        setFile(null);
-        setProblems([]);
-        setNoProblems(false);
-        if (fileInputRef.current) fileInputRef.current.value = "";
-      }, 1500);
-    } catch (error) {
-      console.error("Submission error:", error);
-      showMessage("Erreur lors de la soumission: " + error.message, "error");
-    }
-  };
-
-  // Helpers
-  const showMessage = (message, type = "info") => {
-    setFormStatus({
-      isSubmitting: false,
-      isSuccess: type === "success",
-      message,
-    });
-  };
-
-
   const predefinedProblems = [
     {
       id: 1,
@@ -203,11 +74,292 @@ const ExcelSubmission = ({ well, onCancel }) => {
     },
   ];
 
+  // Derived state
+  const isProblemComplete =
+    currentProblem.type &&
+    currentProblem.severity &&
+    currentProblem.description;
+  const canSubmit = file && (noProblems || problems.length > 0);
+
+  // Handlers
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) {
+      showMessage("Aucun fichier sélectionné", "error");
+      return;
+    }
+
+    if (selectedFile.size > 10 * 1024 * 1024) {
+      showMessage("Le fichier est trop volumineux (max 10MB)", "error");
+      return;
+    }
+
+    const validExtensions = [".xls", ".xlsx"];
+    const extension = selectedFile.name
+      .substring(selectedFile.name.lastIndexOf("."))
+      .toLowerCase();
+
+    if (validExtensions.includes(extension)) {
+      setFile(selectedFile);
+      showMessage("Fichier sélectionné avec succès");
+    } else {
+      showMessage(
+        "Veuillez sélectionner un fichier Excel valide (.xls, .xlsx)",
+        "error"
+      );
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handleAddProblem = () => {
+    if (!isProblemComplete) {
+      showMessage("Veuillez compléter tous les champs du problème", "error");
+      return;
+    }
+
+    const newProblem = {
+      ...currentProblem,
+      id: Date.now(),
+      solution:
+        currentProblem.solution.trim() === "" ? "" : currentProblem.solution,
+    };
+
+    setProblems((prev) => [...prev, newProblem]);
+    setCurrentProblem({
+      type: "",
+      severity: "",
+      description: "",
+      solution: " ",
+      isPredefined: false,
+      predefinedId: null,
+    });
+    showMessage("Problème ajouté au rapport");
+  };
+
+  const handleRemoveProblem = (id) => {
+    setProblems((prev) => prev.filter((problem) => problem.id !== id));
+    showMessage("Problème supprimé");
+  };
+
+  const handleSubmit = async () => {
+    if (!canSubmit) {
+      showMessage(
+        'Veuillez ajouter un fichier et au moins un problème ou cocher "Aucun problème"',
+        "error"
+      );
+      return;
+    }
+
+    setFormStatus({ isSubmitting: true, isSuccess: false, message: "" });
+
+    try {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      const reportData = {
+        wellId: well.id,
+        fileName: file.name,
+        problems: noProblems ? [] : problems,
+        submissionDate: new Date().toISOString(),
+      };
+
+      console.log("Report submitted:", reportData);
+      showMessage("Rapport soumis avec succès!", "success");
+
+      // Reset form after successful submission
+      setTimeout(() => {
+        setFile(null);
+        setProblems([]);
+        setNoProblems(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }, 1500);
+    } catch (error) {
+      console.error("Submission error:", error);
+      showMessage("Erreur lors de la soumission: " + error.message, "error");
+    }
+  };
+
+  const showMessage = (message, type = "info") => {
+    setFormStatus({
+      isSubmitting: false,
+      isSuccess: type === "success",
+      message,
+    });
+  };
+
+  // Correction 1: Gestion améliorée de la solution
+  const [showCustomSolution, setShowCustomSolution] = useState(false);
+
+  const handleProblemChange = (field, value) => {
+    if (field === "solution" && value === "other") {
+      setShowCustomSolution(true);
+      setCurrentProblem((prev) => ({
+        ...prev,
+        solution: "", // Réinitialise pour la solution personnalisée
+      }));
+    } else {
+      setCurrentProblem((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
+    }
+  };
+
+  // Correction 2: Gestion du checkbox "Aucune solution"
+  const handleNoSolutionChange = (e) => {
+    const isChecked = e.target.checked;
+    setCurrentProblem((prev) => ({
+      ...prev,
+      solution: isChecked ? "" : " ", // Utilisation d'un espace pour "avoir une solution"
+    }));
+    setShowCustomSolution(false);
+  };
+
+  // Nouvel état pour gérer l'affichage de la solution personnalisée
+  const [showCustomSolutionInput, setShowCustomSolutionInput] = useState(false);
+
+  // Gestion améliorée des changements de solution
+  const handleSolutionChange = (value) => {
+    if (value === "other") {
+      setShowCustomSolutionInput(true);
+      setCurrentProblem((prev) => ({
+        ...prev,
+        solution: "", // Réinitialise pour nouvelle solution
+      }));
+    } else {
+      setShowCustomSolutionInput(false);
+      setCurrentProblem((prev) => ({
+        ...prev,
+        solution: value,
+      }));
+    }
+  };
+
+  // Correction définitive du checkbox "Aucune solution"
+  const handleNoSolutionToggle = (e) => {
+    const isChecked = e.target.checked;
+    setShowCustomSolutionInput(false);
+    setCurrentProblem((prev) => ({
+      ...prev,
+      solution: isChecked ? "" : " ", // Espace pour permettre le décochage
+    }));
+  };
+
+  // Rendu des champs de solution
+  const renderSolutionFields = () => {
+    // Si "Aucune solution" est coché
+    if (currentProblem.solution === "") return null;
+
+    // Pour problème prédéfini
+    if (currentProblem.isPredefined) {
+      return (
+        <div className="mt-2">
+          <select
+            value={showCustomSolutionInput ? "other" : currentProblem.solution}
+            onChange={(e) => handleSolutionChange(e.target.value)}
+            className="w-full border border-gray-300 rounded-md p-2 text-sm"
+          >
+            {predefinedProblems
+              .find((p) => p.id === currentProblem.predefinedId)
+              ?.solutions.map((solution, index) => (
+                <option key={index} value={solution}>
+                  {solution}
+                </option>
+              ))}
+            <option value="other">Autre solution...</option>
+          </select>
+
+          {showCustomSolutionInput && (
+            <textarea
+              value={currentProblem.solution}
+              onChange={(e) => handleProblemChange("solution", e.target.value)}
+              className="w-full border border-gray-300 rounded-md p-2 text-sm h-20 mt-2"
+              placeholder="Décrivez votre solution personnalisée..."
+            />
+          )}
+        </div>
+      );
+    }
+
+    // Pour problème personnalisé
+    return (
+      <textarea
+        value={currentProblem.solution}
+        onChange={(e) => handleProblemChange("solution", e.target.value)}
+        className="w-full border border-gray-300 rounded-md p-2 text-sm h-20 mt-2"
+        placeholder="Décrivez la solution mise en place..."
+      />
+    );
+  };
+
+  // Correction 3: Affichage conditionnel des champs solution
+  // const renderSolutionFields = () => {
+  //   if (currentProblem.solution === "") {
+  //     return null; // Aucune solution sélectionnée
+  //   }
+
+  //   // Solution pour problème prédéfini
+  //   if (currentProblem.isPredefined) {
+  //     return (
+  //       <>
+  //         <select
+  //           value={
+  //             currentProblem.solution === "other"
+  //               ? "other"
+  //               : currentProblem.solution
+  //           }
+  //           onChange={(e) => {
+  //             if (e.target.value === "other") {
+  //               setShowCustomSolution(true);
+  //               handleProblemChange("solution", "");
+  //             } else {
+  //               setShowCustomSolution(false);
+  //               handleProblemChange("solution", e.target.value);
+  //             }
+  //           }}
+  //           className="w-full border border-gray-300 rounded-md p-2 text-sm mb-2"
+  //         >
+  //           {predefinedProblems
+  //             .find((p) => p.id === currentProblem.predefinedId)
+  //             ?.solutions.map((solution, index) => (
+  //               <option key={index} value={solution}>
+  //                 {solution}
+  //               </option>
+  //             ))}
+  //           <option value="other">Autre solution...</option>
+  //         </select>
+  //         {showCustomSolution && (
+  //           <textarea
+  //             value={currentProblem.solution}
+  //             onChange={(e) => handleProblemChange("solution", e.target.value)}
+  //             className="w-full border border-gray-300 rounded-md p-2 text-sm h-20 mt-2"
+  //             placeholder="Décrivez votre solution..."
+  //           />
+  //         )}
+  //       </>
+  //     );
+  //   }
+
+  //   // Solution pour problème personnalisé
+  //   return (
+  //     <textarea
+  //       value={currentProblem.solution}
+  //       onChange={(e) => handleProblemChange("solution", e.target.value)}
+  //       className="w-full border border-gray-300 rounded-md p-2 text-sm h-20"
+  //       placeholder="Décrivez la solution mise en place..."
+  //     />
+  //   );
+  // };
+
   return (
     <div className="bg-white rounded-lg shadow p-6 mx-auto ">
-      <h2 className="text-xl  mb-6">Soumettre un rapport Excel</h2>
+      <h2 className="text-xl font-semibold mb-6">Soumettre un rapport Excel</h2>
 
-      {/* Status Message */}
       {formStatus.message && (
         <div
           className={`mb-6 p-3 rounded-md ${
@@ -224,7 +376,7 @@ const ExcelSubmission = ({ well, onCancel }) => {
 
       {/* File Upload Section */}
       <div className="mb-8">
-        <h3 className="text-lg mb-3 text-gray-800">
+        <h3 className="text-lg font-medium mb-3 text-gray-800">
           <span className="text-red-500">*</span> Fichier Excel du rapport
         </h3>
         {!file ? (
@@ -310,298 +462,292 @@ const ExcelSubmission = ({ well, onCancel }) => {
       </div>
 
       {/* Problems Section */}
-      {/* Problems Section */}
-      {/* Problems Section */}
-<div className="mb-8">
-  <div className="flex items-center justify-between mb-4">
-    <h3 className="text-lg text-gray-800">Problèmes rencontrés</h3>
-    <label className="inline-flex items-center">
-      <input
-        type="checkbox"
-        checked={noProblems}
-        onChange={() => {
-          setNoProblems(!noProblems);
-          if (!noProblems) {
-            setProblems([]);
-            setCurrentProblem({
-              type: '',
-              severity: '',
-              description: '',
-              solution: '',
-              isPredefined: false,
-              predefinedId: null
-            });
-            showMessage('Aucun problème signalé');
-          }
-        }}
-        className="form-checkbox h-4 w-4 text-blue-600"
-      />
-      <span className="ml-2 text-sm text-gray-600">
-        Aucun problème à signaler
-      </span>
-    </label>
-  </div>
-
-  {!noProblems && (
-    <>
-      {/* Predefined Problems Selector */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Sélectionner un problème récurrent
-        </label>
-        <select
-          value={currentProblem.predefinedId || ''}
-          onChange={(e) => {
-            const selectedId = e.target.value;
-            if (selectedId === 'other') {
-              setCurrentProblem({
-                type: '',
-                severity: '',
-                description: '',
-                solution: '',
-                isPredefined: false,
-                predefinedId: null
-              });
-            } else if (selectedId) {
-              const selectedProblem = predefinedProblems.find(p => p.id.toString() === selectedId);
-              if (selectedProblem) {
-                setCurrentProblem({
-                  type: selectedProblem.type,
-                  severity: selectedProblem.severity,
-                  description: selectedProblem.description,
-                  solution: selectedProblem.solutions[0] || '',
-                  isPredefined: true,
-                  predefinedId: selectedProblem.id
-                });
-              }
-            } else {
-              setCurrentProblem({
-                type: '',
-                severity: '',
-                description: '',
-                solution: '',
-                isPredefined: false,
-                predefinedId: null
-              });
-            }
-          }}
-          className="w-full border border-gray-300 rounded-md p-2 text-sm"
-        >
-          <option value="">-- Sélectionner un problème --</option>
-          {predefinedProblems.map(problem => (
-            <option key={problem.id} value={problem.id}>
-              {problem.description}
-            </option>
-          ))}
-          <option value="other">Autre problème (à définir manuellement)</option>
-        </select>
-      </div>
-
-      {/* Problem Form - Only shown if a problem is selected or being created */}
-      {(currentProblem.description || currentProblem.predefinedId === null) && (
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Type de problème <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={currentProblem.type}
-                onChange={(e) => handleProblemChange('type', e.target.value)}
-                className="w-full border border-gray-300 rounded-md p-2 text-sm"
-                required
-                disabled={currentProblem.isPredefined}
-              >
-                <option value="">Sélectionner un type</option>
-                {problemTypes.map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Gravité <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={currentProblem.severity}
-                onChange={(e) => handleProblemChange('severity', e.target.value)}
-                className="w-full border border-gray-300 rounded-md p-2 text-sm"
-                required
-                disabled={currentProblem.isPredefined}
-              >
-                <option value="">Sélectionner une gravité</option>
-                {severityLevels.map(level => (
-                  <option key={level} value={level}>{level}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description <span className="text-red-500">*</span>
-            </label>
-            <textarea
-              value={currentProblem.description}
-              onChange={(e) => handleProblemChange('description', e.target.value)}
-              placeholder="Décrivez le problème rencontré..."
-              className="w-full border border-gray-300 rounded-md p-2 text-sm h-20"
-              required
-              disabled={currentProblem.isPredefined}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-medium text-gray-800">
+            Problèmes rencontrés
+          </h3>
+          <label className="inline-flex items-center">
+            <input
+              type="checkbox"
+              checked={noProblems}
+              onChange={() => {
+                setNoProblems(!noProblems);
+                if (!noProblems) {
+                  setProblems([]);
+                  setCurrentProblem({
+                    type: "",
+                    severity: "",
+                    description: "",
+                    solution: " ",
+                    isPredefined: false,
+                    predefinedId: null,
+                  });
+                }
+              }}
+              className="form-checkbox h-4 w-4 text-blue-600"
             />
-          </div>
-
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Solution appliquée
-              </label>
-              <label className="flex items-center text-sm text-gray-600">
-                <input
-                  type="checkbox"
-                  checked={!currentProblem.solution}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      handleProblemChange('solution', '');
-                    } else {
-                      handleProblemChange('solution', currentProblem.isPredefined 
-                        ? predefinedProblems.find(p => p.id === currentProblem.predefinedId)?.solutions[0] || ''
-                        : '');
-                    }
-                  }}
-                  className="form-checkbox h-4 w-4 text-blue-600 mr-2"
-                />
-                Aucune solution
-              </label>
-            </div>
-            
-            {currentProblem.solution !== '' && (
-              <>
-                {currentProblem.isPredefined ? (
-                  <select
-                    value={currentProblem.solution}
-                    onChange={(e) => handleProblemChange('solution', e.target.value)}
-                    className="w-full border border-gray-300 rounded-md p-2 text-sm mb-2"
-                  >
-                    {predefinedProblems
-                      .find(p => p.id === currentProblem.predefinedId)?.solutions
-                      .map((solution, index) => (
-                        <option key={index} value={solution}>{solution}</option>
-                      ))}
-                    <option value="other">Autre solution...</option>
-                  </select>
-                ) : null}
-
-                {(currentProblem.solution === 'other' || !currentProblem.isPredefined) && (
-                  <textarea
-                    value={currentProblem.solution === 'other' ? '' : currentProblem.solution}
-                    onChange={(e) => handleProblemChange('solution', e.target.value)}
-                    placeholder="Décrivez la solution mise en place..."
-                    className="w-full border border-gray-300 rounded-md p-2 text-sm h-20"
-                  />
-                )}
-              </>
-            )}
-          </div>
-
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={handleAddProblem}
-              disabled={!isProblemComplete}
-              className={`px-4 py-2 rounded-md text-sm font-medium flex items-center ${
-                isProblemComplete 
-                  ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }`}
-            >
-              <svg className="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              {problems.some(p => p.predefinedId === currentProblem.predefinedId) 
-                ? 'Mettre à jour' 
-                : 'Ajouter ce problème'}
-            </button>
-          </div>
+            <span className="ml-2 text-sm text-gray-600">
+              Aucun problème à signaler
+            </span>
+          </label>
         </div>
-      )}
 
-      {/* Problems List */}
-      {problems.length > 0 && (
-        <div className="space-y-3">
-          <h4 className="text-md font-medium text-gray-700">
-            Problèmes ajoutés ({problems.length})
-          </h4>
-          {problems.map((problem) => (
-            <div key={problem.id} className="border border-gray-200 rounded-md p-4 bg-white shadow-sm">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h5 className="font-medium">{problem.description}</h5>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                      {problem.type}
-                    </span>
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      problem.severity === 'Critique' ? 'bg-red-100 text-red-800' :
-                      problem.severity === 'Moyenne' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-green-100 text-green-800'
-                    }`}>
-                      {problem.severity}
-                    </span>
-                    {problem.isPredefined && (
-                      <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">
-                        Pré-défini
-                      </span>
-                    )}
-                  </div>
-                  {problem.solution && (
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-600">
-                        <span className="font-medium">Solution:</span> {problem.solution}
-                      </p>
-                    </div>
-                  )}
-                  {!problem.solution && (
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-600 italic">
-                        Aucune solution appliquée
-                      </p>
-                    </div>
-                  )}
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => {
+        {!noProblems && (
+          <>
+            {/* Problem Selection */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Sélectionner un problème récurrent
+              </label>
+              <select
+                value={
+                  currentProblem.isPredefined === false
+                    ? "other"
+                    : currentProblem.predefinedId || ""
+                }
+                onChange={(e) => {
+                  const selectedId = e.target.value;
+                  if (selectedId === "other") {
+                    setCurrentProblem({
+                      type: "",
+                      severity: "",
+                      description: "",
+                      solution: " ",
+                      isPredefined: false,
+                      predefinedId: null,
+                    });
+                    showMessage(
+                      "Veuillez décrire le problème manuellement",
+                      "info"
+                    );
+                  } else if (selectedId) {
+                    const selectedProblem = predefinedProblems.find(
+                      (p) => p.id.toString() === selectedId
+                    );
+                    if (selectedProblem) {
                       setCurrentProblem({
-                        ...problem,
-                        isPredefined: problem.isPredefined || false
+                        type: selectedProblem.type,
+                        severity: selectedProblem.severity,
+                        description: selectedProblem.description,
+                        solution: selectedProblem.solutions[0] || " ",
+                        isPredefined: true,
+                        predefinedId: selectedProblem.id,
                       });
-                    }}
-                    className="text-gray-400 hover:text-blue-500"
-                    aria-label="Edit problem"
-                  >
-                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                  </button>
+                    }
+                  }
+                }}
+                className="w-full border border-gray-300 rounded-md p-2 text-sm"
+              >
+                <option value="">-- Sélectionner un problème --</option>
+                {predefinedProblems.map((problem) => (
+                  <option key={problem.id} value={problem.id}>
+                    {problem.description}
+                  </option>
+                ))}
+                <option value="other">
+                  Autre problème (à définir manuellement)
+                </option>
+              </select>
+            </div>
+
+            {/* Problem Form */}
+            {(currentProblem.description ||
+              currentProblem.predefinedId === null) && (
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Type de problème <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={currentProblem.type}
+                      onChange={(e) =>
+                        handleProblemChange("type", e.target.value)
+                      }
+                      className="w-full border border-gray-300 rounded-md p-2 text-sm"
+                      required
+                      disabled={currentProblem.isPredefined}
+                    >
+                      <option value="">Sélectionner un type</option>
+                      {problemTypes.map((type) => (
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Gravité <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={currentProblem.severity}
+                      onChange={(e) =>
+                        handleProblemChange("severity", e.target.value)
+                      }
+                      className="w-full border border-gray-300 rounded-md p-2 text-sm"
+                      required
+                      disabled={currentProblem.isPredefined}
+                    >
+                      <option value="">Sélectionner une gravité</option>
+                      {severityLevels.map((level) => (
+                        <option key={level} value={level}>
+                          {level}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Description <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={currentProblem.description}
+                    onChange={(e) =>
+                      handleProblemChange("description", e.target.value)
+                    }
+                    placeholder="Décrivez le problème rencontré..."
+                    className="w-full border border-gray-300 rounded-md p-2 text-sm h-20"
+                    required
+                    disabled={currentProblem.isPredefined}
+                  />
+                </div>
+                {/* Solution Section - Fixed */}
+             
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Solution appliquée
+                    </label>
+                    <label className="flex items-center text-sm text-gray-600">
+                      <input
+                        type="checkbox"
+                        checked={currentProblem.solution === ""}
+                        onChange={handleNoSolutionToggle}
+                        className="form-checkbox h-4 w-4 text-blue-600 mr-2"
+                      />
+                      Aucune solution
+                    </label>
+                  </div>
+                  {renderSolutionFields()}
+                </div>
+                <div className="flex justify-end">
                   <button
-                    onClick={() => handleRemoveProblem(problem.id)}
-                    className="text-gray-400 hover:text-red-500"
-                    aria-label="Remove problem"
+                    type="button"
+                    onClick={handleAddProblem}
+                    disabled={!isProblemComplete}
+                    className={`px-4 py-2 rounded-md text-sm font-medium ${
+                      isProblemComplete
+                        ? "bg-blue-600 text-white hover:bg-blue-700"
+                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    }`}
                   >
-                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
+                    Ajouter ce problème
                   </button>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </>
-  )}
-</div>
+            )}
+
+            {/* Problems List */}
+            {problems.length > 0 && (
+              <div className="space-y-3">
+                <h4 className="text-md font-medium text-gray-700">
+                  Problèmes ajoutés ({problems.length})
+                </h4>
+                {problems.map((problem) => (
+                  <div
+                    key={problem.id}
+                    className="border border-gray-200 rounded-md p-4 bg-white shadow-sm"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h5 className="font-medium">{problem.description}</h5>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                            {problem.type}
+                          </span>
+                          <span
+                            className={`px-2 py-1 text-xs rounded-full ${
+                              problem.severity === "Critique"
+                                ? "bg-red-100 text-red-800"
+                                : problem.severity === "Moyenne"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-green-100 text-green-800"
+                            }`}
+                          >
+                            {problem.severity}
+                          </span>
+                        </div>
+                        {problem.solution ? (
+                          <div className="mt-2">
+                            <p className="text-sm text-gray-600">
+                              <span className="font-medium">Solution:</span>{" "}
+                              {problem.solution}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="mt-2">
+                            <p className="text-sm text-gray-600 italic">
+                              Aucune solution appliquée
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => {
+                            setCurrentProblem({
+                              ...problem,
+                              isPredefined: problem.isPredefined || false,
+                            });
+                          }}
+                          className="text-gray-400 hover:text-blue-500"
+                          aria-label="Edit problem"
+                        >
+                          <svg
+                            className="h-5 w-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleRemoveProblem(problem.id)}
+                          className="text-gray-400 hover:text-red-500"
+                          aria-label="Remove problem"
+                        >
+                          <svg
+                            className="h-5 w-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
 
       {/* Form Actions */}
       <div className="flex justify-between border-t pt-6">
@@ -654,16 +800,17 @@ const ExcelSubmission = ({ well, onCancel }) => {
     </div>
   );
 };
+
 // Composant principal
 const ReportSubmission = () => {
   const navigate = useNavigate();
   const [selectedWell, setSelectedWell] = useState(null);
-  const [submissionMethod, setSubmissionMethod] = useState(null); // null | 'form' | 'excel'
+  const [submissionMethod, setSubmissionMethod] = useState(null);
   const [newReport, setNewReport] = useState(null);
 
-  // Filtrer les puits non complétés
-  const uncompletedWells = data.drillWells.filter((well) =>
-    well.phases.some((phase) => phase.status !== "completed-good")
+  // Filter wells - only show those that are not Completed, Delayed or Not Started
+  const activeWells = data.drillWells.filter(
+    (well) => !["Completed", "Delayed", "Not Started"].includes(well.status)
   );
 
   const handleWellSelection = (wellId) => {
@@ -672,15 +819,10 @@ const ReportSubmission = () => {
   };
 
   const initializeNewReport = () => {
-    // Prendre la première phase non complétée par défaut
-    const defaultPhase = selectedWell.phases.find(
-      (phase) => phase.status !== "completed-good"
-    );
-
     setNewReport({
       id: null,
       date: new Date().toISOString().split("T")[0],
-      depth: defaultPhase?.plannedDepth || 0,
+      depth: 0,
       progress: 0,
       timeSpent: 0,
       operations: [{ startTime: "", endTime: "", description: "" }],
@@ -690,7 +832,7 @@ const ReportSubmission = () => {
       planned_day: 1,
       actual_day: 1,
       problems: [],
-      phaseId: defaultPhase?.id || null,
+      phaseId: null, // No phase selection by default
     });
   };
 
@@ -701,18 +843,23 @@ const ReportSubmission = () => {
 
         <div className="mb-6 w-2/3">
           <h2 className="text-lg  mb-3">Sélectionnez un puit</h2>
-          {uncompletedWells.length === 0 ? (
-            <p className="text-gray-500">Aucun puits non complété disponible</p>
+
+          {activeWells.length === 0 ? (
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+              <p className="text-sm text-yellow-700">
+                Aucun puits en cours disponible
+              </p>
+            </div>
           ) : (
             <select
               onChange={(e) => handleWellSelection(e.target.value)}
-              className="w-full p-3 border rounded-lg"
+              className="block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               value=""
             >
-              <option value="">Sélectionner un puits</option>
-              {uncompletedWells.map((well) => (
+              <option value="">Selectionnez un puit ...</option>
+              {activeWells.map((well) => (
                 <option key={well.id} value={well.id}>
-                  {well.name} - {well.location}
+                  {well.name} ({well.status})
                 </option>
               ))}
             </select>
@@ -725,7 +872,17 @@ const ReportSubmission = () => {
   if (!submissionMethod) {
     return (
       <div className="bg-white rounded-lg shadow p-6 max-w-5xl mx-auto">
-        <h1 className="text-2xl  mb-6">Méthode de soumission</h1>
+        <div className="flex items-center mb-6">
+          <button
+            onClick={() => setSelectedWell(null)}
+            className="px-5 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-300  bg-gray-200"
+          >
+            Retour
+          </button>
+          <h1 className="ml-10 text-2xl font-semibold text-gray-800">
+            Méthode de soumission du rapport pour le puit : {selectedWell.name}
+          </h1>
+        </div>
 
         <div className="grid md:grid-cols-2 gap-6 mb-6">
           <div
@@ -785,13 +942,6 @@ const ReportSubmission = () => {
             </p>
           </div>
         </div>
-
-        <button
-          onClick={() => setSelectedWell(null)}
-          className="px-5 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-300  bg-gray-200"
-        >
-          Retour
-        </button>
       </div>
     );
   }
@@ -804,6 +954,10 @@ const ReportSubmission = () => {
       />
     );
   }
+
+  // report={newReport}
+  // well={selectedWell}
+  // onCancel={() => setSubmissionMethod(null)}
 
   // Retourner le formulaire de rapport
   // Formulaire de rapport
@@ -818,7 +972,7 @@ const ReportSubmission = () => {
             onClick={() => {
               // Logique de sauvegarde
               console.log("Rapport soumis:", newReport);
-              navigate("/rapports");
+              navigate("/");
             }}
             className="bg-[#10B981] hover:bg-[#2ea880] text-white px-4 py-1.5 rounded-md"
           >
@@ -985,15 +1139,6 @@ const ReportSubmission = () => {
             </tbody>
           </table>
         </div>
-        {/* <div className="mt-2">
-        <input
-          type="text"
-          value={newReport.formation}
-          onChange={(e) => setNewReport({...newReport, formation: e.target.value})}
-          className="text-sm italic w-full p-1 border rounded"
-          placeholder="Notes sur la formation géologique"
-        />
-      </div> */}
       </div>
 
       {/* Informations supplémentaires */}
