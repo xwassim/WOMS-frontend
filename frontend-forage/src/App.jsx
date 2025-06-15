@@ -10,7 +10,6 @@ import LoginPage from "./pages/Login/LoginPage";
 import ReportSubmission from "./pages/Reports/Report_Submission/ReportSubmission";
 import SubmissionSuccess from "./pages/Reports/Report_Submission/SubmissionSuccess";
 import SubmissionWaiting from "./pages/Reports/Report_Submission/SubmissionWaiting";
-import GlobalDashboard from "./pages/Dashboard/GlobalDashboard";
 import PhaseDashboard from "./pages/Dashboard/PhaseDashboard";
 import AddNewForage from "./pages/Drilling/New_drilling/AddNewForage";
 import WellLayout from "./components/Wells/WellLayout"; // New layout component for well-specific pages
@@ -34,7 +33,7 @@ function App() {
                   <main className="flex-1 overflow-y-auto p-4">
                     <Routes>
                       <Route path="/" element={<OperatorView />} />
-                      <Route path="/operator-view" element={<OperatorView />} />
+                      {/*<Route path="/operator-view" element={<OperatorView />} />*/}
                       {/* <Route path="/report-overview" element={<ReportOverview />} /> */}
                       <Route
                         path="/submit-report"
@@ -51,11 +50,7 @@ function App() {
                       
                       <Route path="/planning" element={<DrillingPlanning />} />
                       <Route path="/well/:wellId" element={<WellLayout />}>
-                        <Route index element={<GlobalDashboard />} />
-                        <Route
-                          path="dashboard_global"
-                          element={<GlobalDashboard />}
-                        />
+                        
                         {/* <Route path="/add_report" element={<AddReport />} /> */}
                         <Route path="Dash" element={<Dashboard />} />
                         <Route path="dashboard" element={<PhaseDashboard />} />
@@ -81,7 +76,7 @@ function App() {
         >
           {/* These routes will inherit the main layout */}
           <Route path="/" element={<OperatorView />} />
-          <Route path="/operator-view" element={<OperatorView />} />
+          {/*<Route path="/operator-view" element={<OperatorView />} />*/}
           <Route path="/submit-report" element={<ReportSubmission />} />
           <Route path="/submission-success" element={<SubmissionSuccess />} />
           <Route path="/add-new-forage" element={<AddNewForage />} />
@@ -89,10 +84,9 @@ function App() {
       
           {/* Well-specific nested routes with their own layout */}
           <Route path="/well/:wellId" element={<WellLayout />}>
-            <Route index element={<GlobalDashboard />} />
-            <Route path="Dash" element={<Dashboard />} />
+            
+            <Route index path="Dash" element={<Dashboard />} />
              {/* <Route path="/add_report" element={<AddReport />} /> */}
-            <Route path="dashboard_global" element={<GlobalDashboard />} />
             <Route path="dashboard" element={<PhaseDashboard />} />
             {/* <Route path="planning" element={<DrillingPlanning />} /> */}
             <Route path="reports">

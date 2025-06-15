@@ -1,46 +1,72 @@
-import React from 'react';
-import { DollarSign, Clock, BarChart3, Layers } from 'lucide-react';
-import DrillView from '../specs/DrillView';
+import React, { useState } from "react";
+import { DollarSign, Clock } from "lucide-react";
+import CostStatusCard from "./CostStatusCard";
+import DelayStatusCard from "./DelayStatusCard";
 
 const GlobalOverviewCard = ({ well }) => {
+  const [selectedPhase, setSelectedPhase] = useState(null);
+
   // Format currency
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(amount);
   };
 
-  // Calculate metrics
-  const totalCost = well.totalCost;
-  const plannedCost = well.planning?.totalCost || totalCost;
-  const costVariance = totalCost - plannedCost;
-  const costVariancePercentage = Math.round((costVariance / plannedCost) * 100);
-  
-  const totalDuration = well.totalDuration;
-  const plannedDuration = well.planning?.totalDuration || totalDuration;
+  // Calculate global metrics
+  const actualGlobalCost = well.actualGlobalCost;
+  const plannedGlobalCost = well.planning?.plannedGlobalCost || actualGlobalCost; ;
+  const costVariance = actualGlobalCost - plannedGlobalCost;
+  const costVariancePercentage = Math.round((costVariance / plannedGlobalCost) * 100);
+
+  const actualGlobalDuration = well.actualGlobalDuration;
+  const plannedGloablDuration = well.planning?.plannedGlobalDuration || actualGlobalDuration;
   const delayDays = well.delay || 0;
-  
-  // Get phases with progress info
-  const activePhases = well.phases.filter(phase => phase.progress > 0);
-  const completedPhases = well.phases.filter(phase => phase.progress === 100).length;
-  
+
+  // Calculate phase metrics
+  const getPhaseMetrics = (phase) => {
+    const plannedPhase = well.planning?.phases?.find(p => p.id === phase.id) || {};
+    
+    return {
+      actualPhaseCost: phase.actualPhaseCost,
+      plannedTotalCost: plannedPhase.plannedPhaseCost || phase.actualPhaseCost,
+      costVariance: phase.actualPhaseCost - (plannedPhase.plannedPhaseCost || phase.actualPhaseCost),
+      costVariancePercentage: Math.round(((phase.actualPhaseCost - (plannedPhase.plannedPhaseCost || phase.actualPhaseCost)) / (plannedPhase.plannedPhaseCost || phase.actualPhaseCost)) * 100),
+      actualPhaseDuration: phase.actualPhaseDuration,
+      plannedPhaseDuration: plannedPhase.plannedPhaseDuration || phase.actualPhaseDuration,
+      delayDays: phase.actualPhaseDuration - (plannedPhase.plannedPhaseDuration || phase.actualPhaseDuration)
+    };
+  };
+
+  const phaseMetrics = selectedPhase ? getPhaseMetrics(selectedPhase) : null;
+
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg">
-      <h2 className="text-xl font-bold text-gray-800 ">Vue Globale</h2>
+    <div className="bg-white rounded-xl shadow-md p-6">
+      <h2 className="text-2xl text-gray-800">
+        {selectedPhase ? `Détails de la  ${selectedPhase.name}` : "Tableau de bord"}
+      </h2>
+      
+      {/* Phase Selector - Always visible */}
       <div className="my-3">
-        
+        <p className="text-md text-gray-600 mb-2">
+          {selectedPhase ? "Autres phases disponibles:" : "Sélectionnez une phase pour voir ses détails :"}
+        </p>
         <div className="flex flex-wrap gap-2">
           {well.phases.map((phase, index) => (
-            <div 
+            <div
               key={index}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium ${
-                phase.status === 'completed-good' ? 'bg-green-100 text-green-800' : 
-                phase.status === 'completed-bad' ? 'bg-orange-100 text-orange-800' : 
-                phase.status === 'In Progress' ? 'bg-blue-100 text-blue-800' : 
-                'bg-gray-100 text-gray-800'
+              onClick={() => setSelectedPhase(phase)}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium cursor-pointer transition-colors ${
+                selectedPhase?.id === phase.id 
+                  ? "bg-blue-100 text-blue-800 border border-blue-300"
+                  : phase.status === "completed-good"
+                  ? "bg-green-100 text-green-800 border border-green-300 hover:bg-green-200"
+                  : phase.status === "completed-bad"
+                  ? "bg-orange-100 text-orange-800 border border-orange-300 hover:bg-orange-200"
+                  : "bg-gray-100 text-gray-800 hover:bg-gray-200"
               }`}
             >
               {phase.name}
@@ -48,65 +74,209 @@ const GlobalOverviewCard = ({ well }) => {
           ))}
         </div>
       </div>
-      
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Cost Overview */}
-        <div className="bg-blue-50 rounded-lg p-4">
-          <div className="flex items-center mb-3">
-            <DollarSign className="w-5 h-5 text-blue-600 mr-2" />
-            <h3 className="font-semibold text-gray-800">Cost Overview</h3>
-          </div>
-          
-          <div className="space-y-2">
-            <div>
-              <p className="text-xs text-gray-500">Current Cost</p>
-              <p className="text-lg font-bold">{formatCurrency(totalCost)}</p>
+
+      {selectedPhase ? (
+        /* Phase Details View */
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+          {/* Phase Cost Overview */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-md p-6">
+            <div className="flex items-center mb-4">
+              <div className="p-2 bg-blue-100 rounded-lg mr-3">
+                <DollarSign className="w-5 h-5 text-blue-600" />
+              </div>
+              <h3 className="font-semibold text-lg text-gray-800">Coûts de la Phase</h3>
             </div>
             
-            <div>
-              <p className="text-xs text-gray-500">Planned Budget</p>
-              <p className="text-lg font-bold">{formatCurrency(plannedCost)}</p>
-            </div>
-            
-            <div>
-              <p className="text-xs text-gray-500">Variance</p>
-              <p className={`text-sm font-medium ${costVariance > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                {costVariance > 0 ? '+' : ''}{formatCurrency(costVariance)} ({costVariancePercentage}%)
-              </p>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                <p className="text-sm font-medium text-gray-600 tracking-wider">Coût Réel</p>
+                <p className="text-lg font-bold text-gray-700">
+                  {formatCurrency(phaseMetrics.actualPhaseCost)}
+                </p>
+              </div>
+
+              <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                <p className="text-sm font-medium text-gray-600 tracking-wider">Coût Prévisionnel</p>
+                <p className="text-lg font-bold text-gray-700">
+                  {formatCurrency(phaseMetrics.plannedTotalCost)}
+                </p>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <p className="text-sm font-medium text-gray-600 tracking-wider">Écart</p>
+                <div className="text-right">
+                  <p className={`text-lg font-bold ${
+                    phaseMetrics.costVariance > 0 ? "text-red-600" : "text-green-600"
+                  }`}>
+                    {phaseMetrics.costVariance > 0 ? "+" : ""}
+                    {formatCurrency(phaseMetrics.costVariance)}
+                  </p>
+                  <p className={`text-sm ${
+                    phaseMetrics.costVariance > 0 ? "text-red-500" : "text-green-500"
+                  }`}>
+                    ({phaseMetrics.costVariancePercentage}%)
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
+
+          {/* Phase Delay Overview */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-md p-6">
+            <div className="flex items-center mb-4">
+              <div className="p-2 bg-amber-100 rounded-lg mr-3">
+                <Clock className="w-5 h-5 text-amber-600" />
+              </div>
+              <h3 className="font-semibold text-lg text-gray-800">Délais de la Phase</h3>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                <p className="text-sm font-medium text-gray-600 tracking-wider">Durée Réelle</p>
+                <p className="text-lg font-bold text-gray-700">
+                  {phaseMetrics.actualPhaseDuration} jours
+                </p>
+              </div>
+
+              <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                <p className="text-sm font-medium text-gray-600 tracking-wider">Durée Prévisionnelle</p>
+                <p className="text-lg font-bold text-gray-700">
+                  {phaseMetrics.plannedPhaseDuration} jours
+                </p>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <p className="text-sm font-medium text-gray-600 tracking-wider">État du Planning</p>
+                <div className="text-right">
+                  <p className={`text-lg font-bold ${
+                    phaseMetrics.delayDays > 0 ? "text-red-600" : "text-green-600"
+                  }`}>
+                    {phaseMetrics.delayDays > 0 ? `+${phaseMetrics.delayDays} jours` : "Dans les temps"}
+                  </p>
+                  {phaseMetrics.delayDays > 0 && (
+                    <p className="text-xs text-red-500">
+                      {((phaseMetrics.delayDays / phaseMetrics.plannedPhaseDuration) * 100).toFixed(1)}% de retard
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button 
+            onClick={() => setSelectedPhase(null)}
+            className="col-span-full mt-4 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            ← Retour à la vue globale
+          </button>
         </div>
-        
-        {/* Time Overview */}
-        <div className="bg-amber-50 rounded-lg p-4">
-          <div className="flex items-center mb-3">
-            <Clock className="w-5 h-5 text-amber-600 mr-2" />
-            <h3 className="font-semibold text-gray-800">Time Overview</h3>
-          </div>
+      ) : (
+        /* Global Overview View */
+        <div>
+        <h1 className=" mt-6 text-2xl">Vue globale sur le puit :</h1>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 ">
+          {/* Global Cost Overview */}
           
-          <div className="space-y-2">
-            <div>
-              <p className="text-xs text-gray-500">Days Elapsed</p>
-              <p className="text-lg font-bold">{totalDuration} days</p>
+          <div className="bg-white rounded-xl border border-gray-200 shadow-md p-6 transition-all duration-300 hover:shadow-lg">
+            <div className="flex items-center mb-4">
+              <div className="p-2 bg-blue-100 rounded-lg mr-3">
+                <DollarSign className="w-5 h-5 text-blue-600" />
+              </div>
+              <h3 className="font-semibold text-lg text-gray-800">Aperçu des Coûts</h3>
             </div>
-            
-            <div>
-              <p className="text-xs text-gray-500">Planned Duration</p>
-              <p className="text-lg font-bold">{plannedDuration} days</p>
-            </div>
-            
-            <div>
-              <p className="text-xs text-gray-500">Delay</p>
-              <p className={`text-sm font-medium ${delayDays > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                {delayDays > 0 ? `+${delayDays} days` : 'On schedule'}
-              </p>
+
+            <div className="space-y-4">
+              <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                <p className="text-sm font-medium text-gray-600 tracking-wider">Coût Actuel</p>
+                <p className="text-lg font-bold text-gray-700">
+                  {formatCurrency(actualGlobalCost)}
+                </p>
+              </div>
+
+              <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                <p className="text-sm font-medium text-gray-600 tracking-wider">Budget Prévisionnel</p>
+                <p className="text-lg font-bold text-gray-700">
+                  {formatCurrency(plannedGlobalCost)}
+                </p>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <p className="text-sm font-medium text-gray-600 tracking-wider">Écart</p>
+                <div className="text-right">
+                  <p className={`text-lg font-bold ${
+                    costVariance > 0 ? "text-red-600" : "text-green-600"
+                  }`}>
+                    {costVariance > 0 ? "+" : ""}
+                    {formatCurrency(costVariance)}
+                  </p>
+                  <p className={`text-sm ${
+                    costVariance > 0 ? "text-red-500" : "text-green-500"
+                  }`}>
+                    ({costVariancePercentage}%)
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
+
+          <CostStatusCard well={well} />
+
+          {/* Global Time Overview */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-md p-6 transition-all duration-300 hover:shadow-lg">
+            <div className="flex items-center mb-4">
+              <div className="p-2 bg-amber-100 rounded-lg mr-3">
+                <Clock className="w-5 h-5 text-amber-600" />
+              </div>
+              <h3 className="font-semibold text-lg text-gray-800">Aperçu des Délais</h3>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                <p className="text-sm font-medium text-gray-600 tracking-wider">Jours Écoulés</p>
+                <p className="text-lg font-bold text-gray-700">
+                  {actualGlobalDuration} jours
+                </p>
+              </div>
+
+              <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                <p className="text-sm font-medium text-gray-600 tracking-wider">Durée Prévisionnelle</p>
+                <p className="text-lg font-bold text-gray-700">
+                  {plannedGloablDuration} jours
+                </p>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <p className="text-sm font-medium text-gray-600 tracking-wider">État du Planning</p>
+                <div className="text-right">
+                  <p className={`text-lg font-bold ${
+                    delayDays > 0 ? "text-red-600" : "text-green-600"
+                  }`}>
+                    {delayDays > 0 ? `+${delayDays} jours` : "Dans les temps"}
+                  </p>
+                  {delayDays > 0 && (
+                    <p className="text-xs text-red-500">
+                      {((delayDays / plannedGloablDuration) * 100).toFixed(1)}% de retard
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DelayStatusCard well={well} />
         </div>
-        
-        {/* Progress Overview */}
-        <div className="bg-green-50 rounded-lg p-4">
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default GlobalOverviewCard;
+
+
+
+     {/* Progress Overview */}
+        {/* <div className="bg-green-50 rounded-lg p-4">
           <div className="flex items-center mb-3">
             <BarChart3 className="w-5 h-5 text-green-600 mr-2" />
             <h3 className="font-semibold text-gray-800">Progress Overview</h3>
@@ -137,10 +307,10 @@ const GlobalOverviewCard = ({ well }) => {
               <p className="text-lg font-bold">{completedPhases} / {well.phases.length}</p>
             </div>
           </div>
-        </div>
-        
+        </div> */}
+
         {/* Team Overview */}
-        <div className="bg-purple-50 rounded-lg p-4">
+        {/* <div className="bg-purple-50 rounded-lg p-4">
           <div className="flex items-center mb-3">
             <Layers className="w-5 h-5 text-purple-600 mr-2" />
             <h3 className="font-semibold text-gray-800">Team Overview</h3>
@@ -162,13 +332,4 @@ const GlobalOverviewCard = ({ well }) => {
               <p className="text-lg font-bold">{well.team.crewMembers} members</p>
             </div>
           </div>
-        </div>
-      </div>
-      
-      {/* Phases */}
-     
-    </div>
-  );
-};
-
-export default GlobalOverviewCard;
+        </div> */}

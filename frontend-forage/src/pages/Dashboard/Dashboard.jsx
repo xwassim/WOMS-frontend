@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useMemo } from "react";
 import { useParams } from 'react-router-dom';
@@ -58,17 +59,18 @@ const Dashboard = () => {
     <div className="min-h-screen bg-gray-100">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <GlobalOverviewCard well={selectedWell} />
-         <DrillView/>
+         <DrillView well={selectedWell}/>
+         {/* <DrillView/> */}
          
       </div>
      <div className="mt-6  grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <CostStatusCard well={selectedWell} />
+          {/* <CostStatusCard well={selectedWell} />
          
-          <DelayStatusCard well={selectedWell} />
+          <DelayStatusCard well={selectedWell} /> */}
           
           <ProblemDistributionCard well={selectedWell} />
           <CriticalProblemsCard well={selectedWell} />
-          <PhaseProgressCard well={selectedWell} />
+          {/* <PhaseProgressCard well={selectedWell} /> */}
           <ReportSummaryCard well={selectedWell} />
         </div>
       
