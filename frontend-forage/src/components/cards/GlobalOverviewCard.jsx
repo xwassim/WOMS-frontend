@@ -1,10 +1,38 @@
-import React, { useState } from "react";
+import React, { useState ,useEffect} from "react";
+import { useParams } from 'react-router-dom';
 import { DollarSign, Clock } from "lucide-react";
 import CostStatusCard from "./CostStatusCard";
 import DelayStatusCard from "./DelayStatusCard";
+import axios from "axios";
 
-const GlobalOverviewCard = ({ well }) => {
+const GlobalOverviewCard = () => {
+  const { wellId } = useParams();
+  
+  const phases = [
+    { id: 1, name: 'Phase 26\" x 20\" inchs' },
+    { id: 2, name: 'Phase 16\" x 13\" inchs' },
+    { id: 3, name: 'Phase 12\" x 9\" inchs' },
+    { id: 4, name: 'Phase 8\" x 7\" inchs' }
+  ];
   const [selectedPhase, setSelectedPhase] = useState(null);
+  const [selectedWellback, setSelectedWellback] = useState(null);
+  //const wellId=64;
+  useEffect(() => {
+    axios.get(`http://localhost:9090/api/drillwells/${wellId}`)
+      .then((response) => {
+        const data = response.data;
+        if (data) {
+          setSelectedWellback(data);
+       
+        } else {
+          console.warn("Format de réponse inattendu:", data);
+        }
+      })
+      .catch((err) => {
+        console.error("Erreur lors de la récupération de puit", err);
+      });
+  }, []);
+
 
   // Format currency
   const formatCurrency = (amount) => {
@@ -16,37 +44,138 @@ const GlobalOverviewCard = ({ well }) => {
     }).format(amount);
   };
 
-  // Calculate global metrics
-  const actualGlobalCost = well.actualGlobalCost;
-  const plannedGlobalCost = well.planning?.plannedGlobalCost || actualGlobalCost; ;
-  const costVariance = actualGlobalCost - plannedGlobalCost;
-  const costVariancePercentage = Math.round((costVariance / plannedGlobalCost) * 100);
+  if (!selectedWellback) {
+    return <p>Chargement de puit...</p>;
+  }
 
-  const actualGlobalDuration = well.actualGlobalDuration;
-  const plannedGloablDuration = well.planning?.plannedGlobalDuration || actualGlobalDuration;
-  const delayDays = well.delay || 0;
+  // Calculate global metrics
+
+  
+
+
+  //REAL WORK 
+
+  const totalCost = selectedWellback.totalCost || 0;
+  const plannedCost = (selectedWellback.plannedCost4 || 0);
+
+  const costVarianceback = totalCost - plannedCost;
+  const costVariancePercentageback = plannedCost
+    ? Math.round((costVarianceback / plannedCost) * 100)
+    : 0;
+
+  const actualDuration = (selectedWellback.actualDay || 0) ;
+
+  const plannedDuration =(selectedWellback.plannedDay4 || 0);
+
+  //const delayDays = well.delay || 0;
+  const delayDay = actualDuration - plannedDuration;
 
   // Calculate phase metrics
-  const getPhaseMetrics = (phase) => {
-    const plannedPhase = well.planning?.phases?.find(p => p.id === phase.id) || {};
-    
+
+
+  const getPhaseMetricsback = (phase) => {
+    let actualPhaseCost = 0;
+    let plannedPhaseCost = 0;
+    let actualPhaseDuration = 0;
+    let plannedPhaseDuration = 0;
+    let delayDays = 0;
+    let costVariance = 0;
+    let costVariancePercentage = 0;
+    let phaseName="";
+    switch (phase.id) {
+      case 1:
+        phaseName="Phase 26 x 20 inchs";
+        actualPhaseCost = selectedWellback.cumulativeCost1 || 0;
+        plannedPhaseCost = selectedWellback.plannedCost1 || 0;
+        actualPhaseDuration = selectedWellback.actualDay1 || 0;
+        plannedPhaseDuration = selectedWellback.plannedDay1 || 0;
+        break;
+      case 2:
+        phaseName="Phase 16 x 13 inchs";
+        actualPhaseCost = Math.max(
+          (selectedWellback.cumulativeCost2 || 0) - (selectedWellback.cumulativeCost1 || 0),
+          0
+        );
+        plannedPhaseCost = Math.max(
+          (selectedWellback.plannedCost2 || 0) - (selectedWellback.plannedCost1 || 0),
+          0
+        );
+        actualPhaseDuration = Math.max(
+          (selectedWellback.actualDay2 || 0) - (selectedWellback.actualDay1 || 0),
+          0
+        );
+        plannedPhaseDuration = Math.max(
+          (selectedWellback.plannedDay2 || 0) - (selectedWellback.plannedDay1 || 0),
+          0
+        );
+        break;
+      case 3:
+        phaseName="Phase 12 x 9 inchs";
+        actualPhaseCost = Math.max(
+          (selectedWellback.cumulativeCost3 || 0) - (selectedWellback.cumulativeCost2 || 0),
+          0
+        );
+        plannedPhaseCost = Math.max(
+          (selectedWellback.plannedCost3 || 0) - (selectedWellback.plannedCost2 || 0),
+          0
+        );
+        actualPhaseDuration = Math.max(
+          (selectedWellback.actualDay3 || 0) - (selectedWellback.actualDay2 || 0),
+          0
+        );
+        plannedPhaseDuration = Math.max(
+          (selectedWellback.plannedDay3 || 0) - (selectedWellback.plannedDay2 || 0),
+          0
+        );
+        break;
+      case 4:
+        phaseName="Phase 8 x 7 inchs";
+        actualPhaseCost = Math.max(
+          (selectedWellback.cumulativeCost4 || 0) - (selectedWellback.cumulativeCost3 || 0),
+          0
+        );
+        plannedPhaseCost = Math.max(
+          (selectedWellback.plannedCost4 || 0) - (selectedWellback.plannedCost3 || 0),
+          0
+        );
+        actualPhaseDuration = Math.max(
+          (selectedWellback.actualDay4 || 0) - (selectedWellback.actualDay3 || 0),
+          0
+        );
+        plannedPhaseDuration = Math.max(
+          (selectedWellback.plannedDay4 || 0) - (selectedWellback.plannedDay3 || 0),
+          0
+        );
+        break;
+      default:
+        break;
+    }
+
+    costVariance = actualPhaseCost - plannedPhaseCost;
+    costVariancePercentage = plannedPhaseCost
+      ? Math.round((costVariance / plannedPhaseCost) * 100)
+      : 0;
+    delayDays = actualPhaseDuration - plannedPhaseDuration;
+
+   
     return {
-      actualPhaseCost: phase.actualPhaseCost,
-      plannedTotalCost: plannedPhase.plannedPhaseCost || phase.actualPhaseCost,
-      costVariance: phase.actualPhaseCost - (plannedPhase.plannedPhaseCost || phase.actualPhaseCost),
-      costVariancePercentage: Math.round(((phase.actualPhaseCost - (plannedPhase.plannedPhaseCost || phase.actualPhaseCost)) / (plannedPhase.plannedPhaseCost || phase.actualPhaseCost)) * 100),
-      actualPhaseDuration: phase.actualPhaseDuration,
-      plannedPhaseDuration: plannedPhase.plannedPhaseDuration || phase.actualPhaseDuration,
-      delayDays: phase.actualPhaseDuration - (plannedPhase.plannedPhaseDuration || phase.actualPhaseDuration)
+      actualPhaseCost,
+      plannedTotalCost: plannedPhaseCost,
+      costVariance,
+      costVariancePercentage,
+      actualPhaseDuration,
+      plannedPhaseDuration,
+      delayDays,
+      phaseName,
     };
   };
 
-  const phaseMetrics = selectedPhase ? getPhaseMetrics(selectedPhase) : null;
+  const phaseMetrics = selectedPhase ? getPhaseMetricsback(selectedPhase) : null;
 
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
       <h2 className="text-2xl text-gray-800">
-        {selectedPhase ? `Détails de la  ${selectedPhase.name}` : "Tableau de bord"}
+        {selectedPhase ? `Détails de la  ${phaseMetrics.phaseName}` : "Tableau de bord"}
       </h2>
       
       {/* Phase Selector - Always visible */}
@@ -55,21 +184,17 @@ const GlobalOverviewCard = ({ well }) => {
           {selectedPhase ? "Autres phases disponibles:" : "Sélectionnez une phase pour voir ses détails :"}
         </p>
         <div className="flex flex-wrap gap-2">
-          {well.phases.map((phase, index) => (
+          {phases.map((phase, index) => (
             <div
               key={index}
               onClick={() => setSelectedPhase(phase)}
               className={`px-3 py-1.5 rounded-full text-sm font-medium cursor-pointer transition-colors ${
                 selectedPhase?.id === phase.id 
-                  ? "bg-blue-100 text-blue-800 border border-blue-300"
-                  : phase.status === "completed-good"
-                  ? "bg-green-100 text-green-800 border border-green-300 hover:bg-green-200"
-                  : phase.status === "completed-bad"
-                  ? "bg-orange-100 text-orange-800 border border-orange-300 hover:bg-orange-200"
-                  : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                  ? "bg-blue-100 text-blue-800 border border-blue-300" //hadi selectionné
+                  : "bg-gray-100 text-gray-800 hover:bg-gray-200" //hadi mazal mabdat
               }`}
             >
-              {phase.name}
+              {phase.name} 
             </div>
           ))}
         </div>
@@ -189,14 +314,14 @@ const GlobalOverviewCard = ({ well }) => {
               <div className="flex justify-between items-center pb-3 border-b border-gray-100">
                 <p className="text-sm font-medium text-gray-600 tracking-wider">Coût Actuel</p>
                 <p className="text-lg font-bold text-gray-700">
-                  {formatCurrency(actualGlobalCost)}
+                  {formatCurrency(totalCost)}
                 </p>
               </div>
 
               <div className="flex justify-between items-center pb-3 border-b border-gray-100">
                 <p className="text-sm font-medium text-gray-600 tracking-wider">Budget Prévisionnel</p>
                 <p className="text-lg font-bold text-gray-700">
-                  {formatCurrency(plannedGlobalCost)}
+                  {formatCurrency(plannedCost)}
                 </p>
               </div>
 
@@ -204,22 +329,22 @@ const GlobalOverviewCard = ({ well }) => {
                 <p className="text-sm font-medium text-gray-600 tracking-wider">Écart</p>
                 <div className="text-right">
                   <p className={`text-lg font-bold ${
-                    costVariance > 0 ? "text-red-600" : "text-green-600"
+                    costVarianceback > 0 ? "text-red-600" : "text-green-600"
                   }`}>
-                    {costVariance > 0 ? "+" : ""}
-                    {formatCurrency(costVariance)}
+                    {costVarianceback > 0 ? "+" : ""}
+                    {formatCurrency(costVarianceback)}
                   </p>
                   <p className={`text-sm ${
-                    costVariance > 0 ? "text-red-500" : "text-green-500"
+                    costVarianceback > 0 ? "text-red-500" : "text-green-500"
                   }`}>
-                    ({costVariancePercentage}%)
+                    ({costVariancePercentageback}%)
                   </p>
                 </div>
               </div>
             </div>
           </div>
 
-          <CostStatusCard well={well} />
+          <CostStatusCard actualGlobalCost={totalCost} plannedGlobalCost={plannedCost} />
 
           {/* Global Time Overview */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-md p-6 transition-all duration-300 hover:shadow-lg">
@@ -234,14 +359,14 @@ const GlobalOverviewCard = ({ well }) => {
               <div className="flex justify-between items-center pb-3 border-b border-gray-100">
                 <p className="text-sm font-medium text-gray-600 tracking-wider">Jours Écoulés</p>
                 <p className="text-lg font-bold text-gray-700">
-                  {actualGlobalDuration} jours
+                  {actualDuration} jours
                 </p>
               </div>
 
               <div className="flex justify-between items-center pb-3 border-b border-gray-100">
                 <p className="text-sm font-medium text-gray-600 tracking-wider">Durée Prévisionnelle</p>
                 <p className="text-lg font-bold text-gray-700">
-                  {plannedGloablDuration} jours
+                  {plannedDuration} jours
                 </p>
               </div>
 
@@ -249,13 +374,13 @@ const GlobalOverviewCard = ({ well }) => {
                 <p className="text-sm font-medium text-gray-600 tracking-wider">État du Planning</p>
                 <div className="text-right">
                   <p className={`text-lg font-bold ${
-                    delayDays > 0 ? "text-red-600" : "text-green-600"
+                    delayDay > 0 ? "text-red-600" : "text-green-600"
                   }`}>
-                    {delayDays > 0 ? `+${delayDays} jours` : "Dans les temps"}
+                    {delayDay > 0 ? `+${delayDay} jours` : "Dans les temps"}
                   </p>
-                  {delayDays > 0 && (
+                  {delayDay > 0 && (
                     <p className="text-xs text-red-500">
-                      {((delayDays / plannedGloablDuration) * 100).toFixed(1)}% de retard
+                      {((delayDay / plannedDuration) * 100).toFixed(1)}% de retard
                     </p>
                   )}
                 </div>
@@ -263,7 +388,7 @@ const GlobalOverviewCard = ({ well }) => {
             </div>
           </div>
 
-          <DelayStatusCard well={well} />
+          <DelayStatusCard actualGlobalDuration={actualDuration} plannedGlobalDuration={plannedDuration} delayDays={delayDay} />
         </div>
         </div>
       )}

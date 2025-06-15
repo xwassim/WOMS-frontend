@@ -26,12 +26,24 @@ const AddNewForage = () => {
       plannedEndDate:plannedEndDate, // à remplacer dynamiquement
       status: "On going", // ou selon un champ à ajouter
       totalCost: 0,
+      plannedCost1:1025000,
+      plannedCost2:3805000,
+      plannedCost3:5860000,
+      plannedCost4:9265000,
+      plannedDay1:2,
+      plannedDay2:15,
+      plannedDay3:23,
+      plannedDay4:57,
+      plannedDepth1:"3300",
+      plannedDepth2:"6300",
+      plannedDepth3:"9100",
+      plannedDepth4:"9600",
       type: "Pétrolier" // temporaire, ou à faire saisir
     };
     try {
       const response = await axios.post("http://localhost:9090/api/drillwells", payload);
       console.log("Forage ajouté :", response.data);
-      navigate('/operator-view');
+      navigate('/');
       // Redirection ou message de succès
     } catch (error) {
       console.error("Erreur lors de l'ajout du forage :", error);

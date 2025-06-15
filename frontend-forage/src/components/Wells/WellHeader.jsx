@@ -1,19 +1,37 @@
 import { Outlet, } from "react-router-dom";
 import { Card, CardContent } from "../ui/Card"; // Optional component for well-specific header
 import { useParams } from "react-router-dom";
-import data from "../../data/data"; // Import your data.js
+import React, { useState ,useEffect} from "react";
 import { FiArrowLeft } from 'react-icons/fi';
 import { FaLocationDot } from "react-icons/fa6";
+import axios from "axios"
+
 
 export default function WellHeader() {
   const { wellId } = useParams();
+  const [selectedWellback, setSelectedWellback] = useState(null);
+  
 
-  // Find the well in your data
-  const well = data.drillWells.find((well) => well.id === Number(wellId));
-
-  if (!well) {
-    return <div className="well-header-error">Well not found</div>;
+  useEffect(() => {
+    axios.get(`http://localhost:9090/api/drillwells/${wellId}`)
+      .then((response) => {
+        const data = response.data;
+        if (data) {
+          setSelectedWellback(data);
+        } else {
+          console.warn("Format de réponse inattendu:", data);
+        }
+      })
+      .catch((err) => {
+        console.error("Erreur lors de la récupération de puit", err);
+      });
+  }, [wellId]);
+  
+  if (!selectedWellback) {
+    return <p>Chargement de puit...</p>;
   }
+
+
 
   return (
     <div className=" ">
@@ -31,12 +49,12 @@ export default function WellHeader() {
 
         <div className="flex flex-col items-start gap-[5.28px]">
           <h2 className="w-fit mt-[-0.88px] font-['Inter',Helvetica] font-medium text-[#0f126b] text-lg text-[15.9px] tracking-[0] leading-normal whitespace-nowrap">
-            {well.name}
+            {selectedWellback.wellName}
           </h2>
 
           <div className="flex items-center gap-[1.76px]">
             <p className="w-fit mt-[-0.88px] font-['Inter',Helvetica] font-medium text-[#626365] text-sm tracking-[0] leading-normal">
-              Site : {well.siteName} - {well.location}
+              Site :  {selectedWellback.location}
             </p>
           </div>
         </div>

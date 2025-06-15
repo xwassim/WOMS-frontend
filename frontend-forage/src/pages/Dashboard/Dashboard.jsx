@@ -1,6 +1,6 @@
 
 import React from "react";
-import { useMemo } from "react";
+import { useMemo,useEffect,useState} from "react";
 import { useParams } from 'react-router-dom';
 import data from '../../data/data'; // Import your data directly
 import CostStatusCard from "../../components/cards/CostStatusCard";
@@ -13,10 +13,12 @@ import { AreaChart, BarChart } from "lucide-react";
 import DrillPhasesVisualization from "../../components/specs/DrillPhasesVisualization";
 import PhaseDrillingOverview from "../../components/specs/PhaseDrillingOverview";
 import DrillView from "../../components/specs/DrillView";
+import axios from "axios";
 
 const Dashboard = () => {
   const { wellId } = useParams();
-  const selectedWell = useMemo(() => 
+  
+  /*const selectedWell = useMemo(() => 
     data.drillWells.find(well => well.id === Number(wellId)), 
     [wellId]
   );
@@ -27,51 +29,27 @@ const Dashboard = () => {
         Well not found
       </div>
     );
-  }
+  }*/
 
-  // Prepare visualization data
-  const { visualizationPhases, totalDepth } = useMemo(() => {
-    const phases = selectedWell.phases.map((phase) => ({
-      id: phase.id,
-      name: phase.name.replace("Phase ", ""),
-      status: phase.status,
-      depth: phase.totalDepth || 0,
-      plannedDepth: phase.plannedDepth || 0,
-      costStatus: phase.costStatus || "OK",
-      delayStatus: phase.delayStatus || "OK",
-      depthStatus: phase.depthStatus || "OK",
-      problems: phase.dailyReports.reduce((count, report) => {
-        if (Array.isArray(report.problems) && typeof report.problems[0] !== "string") {
-          return count + report.problems.length;
-        }
-        return count;
-      }, 0),
-    }));
-
-    const depth = selectedWell.planning.phases.reduce(
-      (total, phase) => total + phase.depth, 0
-    );
-
-    return { visualizationPhases: phases, totalDepth: depth };
-  }, [selectedWell]);
-
+ 
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <GlobalOverviewCard well={selectedWell} />
-         <DrillView well={selectedWell}/>
+        <GlobalOverviewCard  />
+        <DrillView />
          {/* <DrillView/> */}
          
       </div>
+      
      <div className="mt-6  grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* <CostStatusCard well={selectedWell} />
          
           <DelayStatusCard well={selectedWell} /> */}
           
-          <ProblemDistributionCard well={selectedWell} />
-          <CriticalProblemsCard well={selectedWell} />
+           {/*<ProblemDistributionCard well={selectedWell} />*/}
+           {/*<CriticalProblemsCard well={selectedWell} />*/}
           {/* <PhaseProgressCard well={selectedWell} /> */}
-          <ReportSummaryCard well={selectedWell} />
+           {/*<ReportSummaryCard well={selectedWell} />*/}
         </div>
       
       

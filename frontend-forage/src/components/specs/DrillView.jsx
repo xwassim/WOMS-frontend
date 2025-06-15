@@ -1,19 +1,52 @@
-import React, { useState } from "react";
+import React, { useState ,useEffect} from "react";
+import { useParams } from 'react-router-dom';
+import axios from "axios";
 
 const MAX_HEIGHT_PX = 520;
 const DEPTH_SCALE = MAX_HEIGHT_PX / 8500;
 const BASE_SPACING = 40;
 const INITIAL_OFFSET = 70;
 
-const DrillView = ({ well }) => {
+const DrillView = () => {
   const [selectedPhase, setSelectedPhase] = useState(null);
+  const phases = [
+    { id: 1, name: 'Phase 26\" x 20\" inchs' },
+    { id: 2, name: 'Phase 16\" x 13\" inchs' },
+    { id: 3, name: 'Phase 12\" x 9\" inchs' },
+    { id: 4, name: 'Phase 8\" x 7\" inchs' }
+  ];
+  //const wellId=64;
+  const { wellId } = useParams();
+  const [selectedWellback, setSelectedWellback] = useState(null);
+  useEffect(() => {
+    axios.get(`http://localhost:9090/api/drillwells/${wellId}`)
+      .then((response) => {
+        const data = response.data;
+        if (data) {
+          setSelectedWellback(data);
+       
+        } else {
+          console.warn("Format de réponse inattendu:", data);
+        }
+      })
+      .catch((err) => {
+        console.error("Erreur lors de la récupération de puit", err);
+      });
+  }, []);
 
-  const getProblemCount = (phase) => {
+  if (!selectedWellback) {
+    return <div className="text-center py-4 text-gray-600">Chargement du puits...</div>;
+  }
+
+
+  /*const getProblemCount = (phase) => {
     if (!phase.dailyReports) return 0;
     return phase.dailyReports.reduce((total, report) => {
       return total + (report.problems ? report.problems.length : 0);
     }, 0);
-  };
+  };*/
+
+
 
   const handleClick = (phase) => {
     setSelectedPhase(phase.id === selectedPhase?.id ? null : phase);
@@ -24,28 +57,82 @@ const DrillView = ({ well }) => {
   };
 
   const getPhaseMetrics = (phase) => {
-    const plannedPhase = well.planning?.phases?.find(p => p.id === phase.id) || {};
-    
-    // Use planned depth if phase is not completed and actual depth is 0 or undefined
-    const displayDepth = phase.status === "not-completed" && (!phase.actualPhaseDepth || phase.actualPhaseDepth === 0)
-      ? plannedPhase.plannedPhaseDepth
-      : phase.actualPhaseDepth;
 
-    return {
-      phaseName: phase.name,
-      phaseStatus: phase.status,
-      actualPhaseCost: phase.actualPhaseCost,
-      actualPhaseDuration: phase.actualPhaseDuration,
-      displayDepth: displayDepth,
-      plannedPhaseCost: plannedPhase.plannedPhaseCost,
-      plannedPhaseDuration: plannedPhase.plannedPhaseDuration,
-      plannedPhaseDepth: plannedPhase.plannedPhaseDepth,
-      costVariance: phase.actualPhaseCost - plannedPhase.plannedPhaseCost,
-      durationVariance: phase.actualPhaseDuration - plannedPhase.plannedPhaseDuration,
-      depthVariance: displayDepth - plannedPhase.plannedPhaseDepth,
-      numberOfProblems: getProblemCount(phase),
+    let plannedDepth = 0;
+    let actualDepth = 0;
+   
+    const currentPhaseId = selectedWellback.phaseId || 0;
+
+    switch (phase.id) {
+      case 1:
+        plannedDepth = selectedWellback.plannedDepth1 || 0;
+        actualDepth = selectedWellback.depth1 || 0;
+        break;
+      case 2:
+        plannedDepth = Math.max(
+          (selectedWellback.plannedDepth2 || 0) - (selectedWellback.plannedDepth1 || 0),
+          0
+        );
+        actualDepth = Math.max(
+          (selectedWellback.depth2 || 0) - (selectedWellback.depth1 || 0),
+          0
+        );
+        break;
+      case 3:
+        plannedDepth = Math.max(
+          (selectedWellback.plannedDepth3 || 0) - (selectedWellback.plannedDepth2 || 0),
+          0
+        );
+        actualDepth = Math.max(
+          (selectedWellback.depth3 || 0) - (selectedWellback.depth2 || 0),
+          0
+        );
+        break;
+      case 4:
+        plannedDepth = Math.max(
+          (selectedWellback.plannedDepth4 || 0) - (selectedWellback.plannedDepth3 || 0),
+          0
+        );
+        actualDepth = Math.max(
+          (selectedWellback.depth4 || 0) - (selectedWellback.depth3 || 0),
+          0
+        );
+        break;
+      default:
+        plannedDepth = 0;
+        actualDepth = 0;
+    }
+
+    let status = "completed-good" ;
+    let danger = 0;
+
+     // 🔁 Forcer à afficher plannedDepth si la phase n'est pas encore atteinte
+    if (currentPhaseId < phase.id) {
+      actualDepth = plannedDepth;
+      status = "not-completed" ;
+    }
+    
+    
+    if (plannedDepth < actualDepth) {
+      status = "completed-bad";
+      danger = 1;
+    }
+    
+
+
+      // Use planned depth if phase is not completed and actual depth is 0 or undefined
+
+
+      return {
+
+        plannedDepth,
+        actualDepth,
+        depthdifference : actualDepth - plannedDepth,
+        status,
+        danger,
+        //numberOfProblems: getProblemCount(phase),
+      };
     };
-  };
 
   const getBarColor = (status) => {
     switch (status) {
@@ -74,16 +161,16 @@ const DrillView = ({ well }) => {
         <div className="flex-grow grid grid-cols-2 gap-1">
           {/* Planning Column */}
           <div className="flex flex-col items-center">
-            {well.planning?.phases?.map((phase, idx) => {
-              const height = phase.plannedPhaseDepth * DEPTH_SCALE;
+            {phases.map((phase, idx) => {
+              const height = getPhaseMetrics(phase).plannedDepth * DEPTH_SCALE;
               return (
                 <div key={`planning-${phase.id}`} className="flex items-start mb-2  " style={{ minHeight: "30px" }}>
                   <div className="text-sm font-medium text-gray-500 w-36 text-left">
-                    {phase.name}
+                    {phase.name} 
                   </div>
                   <div className="flex items-end">
                     <span className="text-sm bottom-0 font-semibold mr-2 text-gray-700">
-                      {phase.plannedPhaseDepth} ft
+                      {getPhaseMetrics(phase).plannedDepth} ft
                     </span>
                     <div className="flex flex-col items-center">
                       <div
@@ -99,12 +186,10 @@ const DrillView = ({ well }) => {
 
           {/* Real Column */}
           <div className="flex flex-col  items-center">
-            {well.phases?.map((phase, idx) => {
-              const plannedPhase = well.planning?.phases?.find(p => p.id === phase.id);
+            {phases.map((phase, idx) => {
               const phaseMetrics = getPhaseMetrics(phase);
-              const realHeight = phaseMetrics.displayDepth * DEPTH_SCALE;
-              const exceeded = plannedPhase ? phaseMetrics.displayDepth > plannedPhase.plannedPhaseDepth : false;
-              const tubeColor = getBarColor(phase.status);
+              const realHeight = phaseMetrics.actualDepth * DEPTH_SCALE;
+              const tubeColor = getBarColor(phaseMetrics.status);
 
               return (
                 <div key={`real-${phase.id}`} className="flex items-center mb-2 relative ">
@@ -116,8 +201,8 @@ const DrillView = ({ well }) => {
                         onClick={() => handleClick(phase)}
                       ></div>
                     </div>
-                    <span className={`text-sm ml-2 font-semibold ${exceeded ? "text-red-500" : "text-gray-700"}`}>
-                      {phaseMetrics.displayDepth} ft
+                    <span className={`text-sm ml-2 font-semibold ${getPhaseMetrics(phase).danger ? "text-red-500" : "text-gray-700"}`}>
+                      {phaseMetrics.actualDepth} ft
                     </span>
                   </div>
 
@@ -140,51 +225,21 @@ const DrillView = ({ well }) => {
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm">Etat des Couts</span>
-                            <span
-                              className={`text-xs px-3 py-1 rounded-full ${
-                                phaseMetrics.costVariance <= 0
-                                  ? "bg-green-500 text-white"
-                                  : "bg-red-400 text-white"
-                              }`}
-                            >
-                              {phaseMetrics.costVariance <= 0 ? "OK" : "Mauvais"}
-                            </span>
-                          </div>
-
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm">Etat des Délais</span>
-                            <span
-                              className={`text-xs px-3 py-1 rounded-full ${
-                                phaseMetrics.durationVariance <= 0
-                                  ? "bg-green-500 text-white"
-                                  : "bg-red-400 text-white"
-                              }`}
-                            >
-                              {phaseMetrics.durationVariance <= 0 ? "OK" : "Mauvais"}
-                            </span>
-                          </div>
+                         
 
                           <div className="flex justify-between items-center">
                             <span className="text-sm">Profondeur</span>
                             <span
                               className={`text-xs px-3 py-1 rounded-full ${
-                                exceeded
+                                getPhaseMetrics(phase).danger
                                   ? "bg-red-400 text-white"
                                   : "bg-green-500 text-white"
                               }`}
                             >
-                              {exceeded ? "Excédée" : "OK"}
+                              {getPhaseMetrics(phase).danger ? "Excédée" : "OK"}
                             </span>
                           </div>
 
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm">Problemes</span>
-                            <span className="text-xs px-3 py-1 rounded-full bg-gray-300 text-gray-700">
-                              {phaseMetrics.numberOfProblems} signalés
-                            </span>
-                          </div>
                         </div>
                       )}
                     </div>

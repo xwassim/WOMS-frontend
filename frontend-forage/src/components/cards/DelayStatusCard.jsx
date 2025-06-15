@@ -2,12 +2,9 @@ import React from 'react';
 import { Clock } from 'lucide-react';
 import GaugeChart from '../charts/GaugeChart';
 
-const DelayStatusCard = ({ well }) => {
+const DelayStatusCard = ({ actualGlobalDuration , plannedGlobalDuration, delayDays}) => {
   // Calculate metrics
-  const actualGlobalDuration = well.actualGlobalDuration;
-  const plannedGlobalDuration = well.planning?.plannedGlobalDuration;
   const delayPercentage = Math.min( Math.round((actualGlobalDuration / plannedGlobalDuration) * 100));
-  const delayDays = well.delay || 0;
   
 // Determine color based on delay percentage
 // - Green (text-green-500/#22c55e) for normal levels (<80%)

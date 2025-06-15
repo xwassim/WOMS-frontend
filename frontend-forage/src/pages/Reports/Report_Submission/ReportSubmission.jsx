@@ -764,6 +764,24 @@ const ReportSubmission = () => {
 
   const handleSaveReport = async () => {
     try {
+      let phaseId = null;
+      switch (newReport.phaseName) {
+        case "Phase 26 x 20":
+          phaseId = 1;
+          break;
+        case "Phase 16 x 13":
+          phaseId = 2;
+          break;
+        case "Phase 12 x 9":
+          phaseId = 3;
+          break;
+        case "Phase 8 x 7":
+          phaseId = 4;
+          break;
+        default:
+          phaseId = 0; // Ou null si tu préfères
+          break;
+      }
       const formattedProgress = `${newReport.progress} ft en ${newReport.timeSpent} h`;
       const formattedWorkDone = newReport.workDone.map((entry) => {
         const start = entry.startTime || "";
@@ -774,6 +792,7 @@ const ReportSubmission = () => {
 
       const payload = {
         ...newReport,
+        phaseId,
         progress: formattedProgress,
         workDone: formattedWorkDone,
       };
@@ -784,6 +803,43 @@ const ReportSubmission = () => {
       );
       const savedReport = response.data;
       console.log("Rapport ajouté :", savedReport);
+
+      const updatedDrillWell = { ...selectedWell }; // clonage
+      const cumulativeCost = parseFloat(newReport.dailyCost) + parseFloat(updatedDrillWell.totalCost);
+      const depth = newReport.depth || "";
+      const actualDay = newReport.actualDay || 0;
+      updatedDrillWell.actualDay = actualDay;
+      updatedDrillWell.totalCost= cumulativeCost;
+      updatedDrillWell.depth = depth;
+      updatedDrillWell.phaseId = phaseId;
+
+      switch (phaseId) {
+        case 1:
+          updatedDrillWell.cumulativeCost1 = cumulativeCost;
+          updatedDrillWell.actualDay1 = actualDay;
+          updatedDrillWell.depth1 = depth;
+          break;
+        case 2:
+          updatedDrillWell.cumulativeCost2 = cumulativeCost;
+          updatedDrillWell.actualDay2 = actualDay;
+          updatedDrillWell.depth2 = depth;
+          break;
+        case 3:
+          updatedDrillWell.cumulativeCost3 = cumulativeCost;
+          updatedDrillWell.actualDay3 = actualDay;
+          updatedDrillWell.depth3 = depth;
+          break;
+        case 4:
+          updatedDrillWell.cumulativeCost4 = cumulativeCost;
+          updatedDrillWell.actualDay4 = actualDay;
+          updatedDrillWell.depth4 = depth;
+          break;
+      }
+
+      await axios.put(
+        `http://localhost:9090/api/drillwells/${selectedWell.id}`,
+        updatedDrillWell
+      );
 
       
       for (const problem of problems) {
@@ -808,7 +864,7 @@ const ReportSubmission = () => {
         }
       }
 
-      navigate("/operator-view");
+      navigate("/");
     } catch (error) {
       console.error("Erreur lors de l'envoi du rapport :", error);
       alert("Erreur lors de l'envoi du rapport");
@@ -827,6 +883,7 @@ const ReportSubmission = () => {
       dailyCost: 0,
       plannedDay: 0,
       actualDay: 0,
+      phaseId:0,
       phaseName:  "",
     });
     setProblems([]);
@@ -1143,7 +1200,7 @@ const ReportSubmission = () => {
               className="w-full px-1 py-1.5 border rounded-md text-gray-800"
             >
               <option value="">Sélectionner une phase</option>
-              <option value="Phase 26 x 20 ">Phase 26" x 20" inchs</option>
+              <option value="Phase 26 x 20">Phase 26" x 20" inchs</option>
               <option value="Phase 16 x 13">Phase 16" x 13" inchs</option>
               <option value="Phase 12 x 9">Phase 12" x 9" inchs</option>
               <option value="Phase 8 x 7">Phase 8" x 7" inchs</option>

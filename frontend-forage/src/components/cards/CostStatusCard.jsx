@@ -2,10 +2,8 @@ import React from 'react';
 import { DollarSign } from 'lucide-react';
 import GaugeChart from '../charts/GaugeChart';
 
-const CostStatusCard = ({ well }) => {
+const CostStatusCard = ({ actualGlobalCost , plannedGlobalCost }) => {
   // Calculate metrics
-  const actualGlobalCost = well.actualGlobalCost;
-  const plannedGlobalCost = well.planning?.plannedGlobalCost || 1000000;
   const costPercentage = Math.min( Math.round((actualGlobalCost / plannedGlobalCost) * 100));
   
   // Format currency
