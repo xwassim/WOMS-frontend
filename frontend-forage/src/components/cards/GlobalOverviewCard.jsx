@@ -173,7 +173,7 @@ const GlobalOverviewCard = ({ well }) => {
       ) : (
         /* Global Overview View */
         <div>
-        <h1 className=" mt-6 text-2xl">Vue globale sur le puit :</h1>
+        <h1 className=" mt-6 text-xl">Vue globale sur le puit</h1>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 ">
           {/* Global Cost Overview */}
           

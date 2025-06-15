@@ -21,7 +21,7 @@ const AddNewForage = () => {
         </Link>
       </div>
 
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">Ajout d'un nouveau site de Forage</h1>
+      <h1 className="text-2xl text-gray-800 mb-6">Ajout d'un nouveau site de Forage</h1>
 
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -47,7 +47,7 @@ const AddNewForage = () => {
           </div>
         </div>
 
-        <div className="mb-6">
+        {/* <div className="mb-6">
           <label className="block text-gray-700 mb-1">Progression</label>
           <div className="flex items-center space-x-4">
             <input
@@ -60,7 +60,7 @@ const AddNewForage = () => {
             />
             <span className="text-gray-700">{progress}%</span>
           </div>
-        </div>
+        </div> */}
 
         <div className="mb-6">
           <label className="block text-gray-700 mb-1">Date de creation</label>

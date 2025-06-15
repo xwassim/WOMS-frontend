@@ -1277,7 +1277,7 @@ const ReportSubmission = () => {
                       }}
                       className="w-full px-1 py-2 border rounded-md"
                     >
-                      {[1, 2, 3].map((num) => (
+                      {['Mineure', 'Moyenne', 'Critique'].map((num) => (
                         <option key={num} value={num}>
                           {num}
                         </option>

@@ -7,6 +7,7 @@ import {
   FaPlus,
   FaFilter,
   FaTimes,
+  FaTrash,
 } from "react-icons/fa";
 import {
   Dialog,
@@ -79,11 +80,12 @@ const OperatorView = () => {
           site.siteName,
           site.status,
           site.location,
-          site.id.toString()
+          site.id.toString(),
         ];
-        
+
         return searchableFields.some(
-          field => field && field.toString().toLowerCase().includes(searchLower)
+          (field) =>
+            field && field.toString().toLowerCase().includes(searchLower)
         );
       });
     }
@@ -140,8 +142,20 @@ const OperatorView = () => {
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  const handleViewGlobalDashboard = (wellId) => {
-    navigate(`/global-dashboard/${wellId}`);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [siteToDelete, setSiteToDelete] = useState(null);
+
+  // Gestion de la suppression
+  const handleDeleteClick = (site) => {
+    setSiteToDelete(site);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = () => {
+    // Ici vous ajouterez la logique de suppression réelle
+    console.log("Suppression du site:", siteToDelete);
+    setShowDeleteDialog(false);
+    setSiteToDelete(null);
   };
 
   const formatDate = (dateString) => {
@@ -194,7 +208,6 @@ const OperatorView = () => {
           </Link>
         </div>
       </div>
-
       {/* Sites table */}
       <div className="overflow-x-auto rounded-lg border border-[#e6e5e5] mb-4">
         <table className="min-w-full border-collapse">
@@ -247,23 +260,19 @@ const OperatorView = () => {
                         Dashboard
                       </Link>
                       <Link
-                        to={`/well/${site.id}/dashboard`}
-                        className="text-green-600 hover:text-green-800 underline"
-                      >
-                        Détails
-                      </Link>
-                      <Link
-                        to={`/planning`}
-                        className="text-orange-600 hover:text-orange-800 underline"
-                      >
-                        Planning
-                      </Link>
-                      <Link
                         to={`/well/${site.id}/reports`}
                         className="text-purple-600 hover:text-purple-800 underline"
                       >
                         Rapports
                       </Link>
+                      {/* ajoute un bouton 'supprimer' qui permet de declancher un pop demandant la confirmation de suppression du puit */}
+                      <button
+                        onClick={() => handleDeleteClick(site)}
+                        className="text-red-600 hover:text-red-800 underline flex items-center"
+                        title="Supprimer"
+                      >
+                        Supprimer
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -278,7 +287,6 @@ const OperatorView = () => {
           </tbody>
         </table>
       </div>
-
       {/* Footer with total count */}
       <div className="flex justify-between items-center w-full">
         <p className="text-sm text-black">
@@ -312,6 +320,59 @@ const OperatorView = () => {
           </div>
         </div>
       </div>
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        PaperProps={{
+          style: {
+            borderRadius: 16,
+            padding: "16px",
+            minWidth: "400px",
+          },
+        }}
+      >
+        <DialogTitle>
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl text-gray-700">Confirmer la suppression</h2>
+            <button
+              onClick={() => setShowDeleteDialog(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <FaTimes />
+            </button>
+          </div>
+        </DialogTitle>
+        <DialogContent>
+          <p className="text-gray-700 mt-4">
+            Êtes-vous sûr de vouloir supprimer le site{" "}
+            <strong>{siteToDelete?.wellName}</strong> ?
+          </p>
+          <p className="text-sm text-gray-500 mt-2">
+            Cette action est irréversible et supprimera toutes les données
+            associées à ce site.
+          </p>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setShowDeleteDialog(false)}
+            style={{ backgroundColor: "#ececec", color: "#6B7280" }}
+          >
+            Annuler
+          </Button>
+          <Button
+            onClick={confirmDelete}
+            style={{
+              backgroundColor: "#e70000",
+              color: "white",
+              radius: "15px",
+            }}
+            variant="contained"
+          >
+            Confirmer la suppression
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Filter Dialog */}
       <Dialog
@@ -327,9 +388,7 @@ const OperatorView = () => {
       >
         <DialogTitle>
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-gray-700">
-              Filtrer les sites
-            </h2>
+            <h2 className="text-xl text-gray-700">Filtrer les sites</h2>
             <button
               onClick={() => setShowFilterDialog(false)}
               className="text-gray-500 hover:text-gray-700"

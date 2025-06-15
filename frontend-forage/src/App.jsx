@@ -9,13 +9,9 @@ import Header from "./components/Header";
 import LoginPage from "./pages/Login/LoginPage";
 import ReportSubmission from "./pages/Reports/Report_Submission/ReportSubmission";
 import SubmissionSuccess from "./pages/Reports/Report_Submission/SubmissionSuccess";
-import SubmissionWaiting from "./pages/Reports/Report_Submission/SubmissionWaiting";
-
-import PhaseDashboard from "./pages/Dashboard/PhaseDashboard";
 import AddNewForage from "./pages/Drilling/New_drilling/AddNewForage";
 import WellLayout from "./components/Wells/WellLayout"; // New layout component for well-specific pages
 import Dashboard from "./pages/Dashboard/Dashboard"; // Test component for testing purposes
-
 
 function App() {
   return (
@@ -34,8 +30,6 @@ function App() {
                   <main className="flex-1 overflow-y-auto p-4">
                     <Routes>
                       <Route path="/" element={<OperatorView />} />
-                      {/* <Route path="/operator-view" element={<OperatorView />} /> */}
-                      {/* <Route path="/report-overview" element={<ReportOverview />} /> */}
                       <Route
                         path="/submit-report"
                         element={<ReportSubmission />}
@@ -48,14 +42,12 @@ function App() {
                         path="/add-new-forage"
                         element={<AddNewForage />}
                       />
-                      
+
                       <Route path="/planning" element={<DrillingPlanning />} />
                       <Route path="/well/:wellId" element={<WellLayout />}>
-                        
                         {/* <Route path="/add_report" element={<AddReport />} /> */}
                         <Route path="Dash" element={<Dashboard />} />
-                        <Route path="dashboard" element={<PhaseDashboard />} />
-                        {/* <Route path="planning" element={<DrillingPlanning />} /> */}
+
                         <Route path="reports">
                           <Route index element={<ReportsCatalog />} />
                           <Route
@@ -78,28 +70,16 @@ function App() {
           <Route path="/submission-success" element={<SubmissionSuccess />} />
           <Route path="/add-new-forage" element={<AddNewForage />} />
           <Route path="/planning" element={<DrillingPlanning />} />
-      
+
           {/* Well-specific nested routes with their own layout */}
           <Route path="/well/:wellId" element={<WellLayout />}>
-          
             <Route index path="Dash" element={<Dashboard />} />
-             {/* <Route path="/add_report" element={<AddReport />} /> */}
-           
-            <Route path="dashboard" element={<PhaseDashboard />} />
-            {/* <Route path="planning" element={<DrillingPlanning />} /> */}
             <Route path="reports">
               <Route index element={<ReportsCatalog />} />
               <Route path=":phaseId/:reportId" element={<ReportOverview />} />
             </Route>
           </Route>
         </Route>
-
-        {/* Backward compatible routes (can be deprecated later) */}
-        {/* 
-          <Route path="/phase-dashboard/:wellId" element={<PhaseDashboard />} />
-          <Route path="/drilling-planning/:wellId" element={<DrillingPlanning />} /> */}
-        {/* <Route path="/reports/:wellId" element={<ReportsCatalog />} /> */}
-        {/* <Route path="/reports/:wellId/report-overview" element={<ReportOverview />} /> */}
       </Routes>
     </Router>
   );

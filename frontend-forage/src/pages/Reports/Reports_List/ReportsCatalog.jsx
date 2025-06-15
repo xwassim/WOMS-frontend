@@ -111,7 +111,7 @@ const ReportsCatalog = () => {
     <div className="bg-white rounded-lg shadow-lg relative p-6 font-dm-sans">
       {/* En-tête avec barre de recherche */}
       <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
-        <h1 className="text-xl text-gray-800">
+        <h1 className="text-2xl text-gray-800">
           Catalogue des rapports 
         </h1>
 

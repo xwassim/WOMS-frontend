@@ -489,7 +489,7 @@ const ReportOverview = () => {
                         }
                         className="w-full p-1 border rounded"
                       >
-                        {[1, 2, 3].map((num) => (
+                        {['Mineure', 'Moyenne', 'Critique'].map((num) => (
                           <option key={num} value={num}>
                             {num}
                           </option>

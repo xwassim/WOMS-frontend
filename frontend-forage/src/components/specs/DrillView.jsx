@@ -62,7 +62,7 @@ const DrillView = ({ well }) => {
 
   return (
     <div className="flex flex-col w-full max-w-5xl mx-auto bg-white rounded-lg shadow-md ring-1 ring-gray-200">
-          <h2 className="text-2xl text-gray-800 mt-6 ml-6">
+          <h2 className="text-xl text-gray-800 mt-6 ml-6">
       Vue d'Ensemble du Forage
       </h2>
       <div className="flex justify-center gap-32 my-3" style={{ marginLeft: `-${INITIAL_OFFSET}px` }}>
