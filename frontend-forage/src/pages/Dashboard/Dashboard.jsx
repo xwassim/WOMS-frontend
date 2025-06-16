@@ -18,18 +18,14 @@ import axios from "axios";
 const Dashboard = () => {
   const { wellId } = useParams();
   
-  /*const selectedWell = useMemo(() => 
-    data.drillWells.find(well => well.id === Number(wellId)), 
+  const selectedWell = useMemo(
+    () => data.drillWells.find((well) => well.id === Number(wellId)),
     [wellId]
   );
 
   if (!selectedWell) {
-    return (
-      <div className="p-4 text-red-500">
-        Well not found
-      </div>
-    );
-  }*/
+    return <div className="p-4 text-red-500">Well not found</div>;
+  }
 
  
   return (
@@ -37,33 +33,13 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <GlobalOverviewCard  />
         <DrillView />
-         {/* <DrillView/> */}
-         
       </div>
-      
-     <div className="mt-6  grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* <CostStatusCard well={selectedWell} />
-         
-          <DelayStatusCard well={selectedWell} /> */}
-          
-           {/*<ProblemDistributionCard well={selectedWell} />*/}
-           {/*<CriticalProblemsCard well={selectedWell} />*/}
-          {/* <PhaseProgressCard well={selectedWell} /> */}
-           {/*<ReportSummaryCard well={selectedWell} />*/}
+      <div className="mt-6  grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <ProblemDistributionCard well={selectedWell} />
+        <div className="col-span-1 lg:col-span-2">
+          <CriticalProblemsCard well={selectedWell} />
         </div>
-      
-      
-      
-      {/* <DrillPhasesVisualization phases={visualizationPhases} maxDepth={totalDepth} /> */}
-     
-{/* 
-       <PhaseDrillingOverview drillWell={selectedWell} className="mt-8" /> */}
-      
-      
-      
-      <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8">
-       
-      </div>
+      </div>  
     </div>
   );
 };

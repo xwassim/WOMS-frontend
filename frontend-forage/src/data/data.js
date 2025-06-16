@@ -93,27 +93,27 @@ const data = {
                       id: 1,
                       name: "Casse outil de forage",
                       type: "Technique",
-                      severity: 2,
+                      severity: 'Moyenne',
         
                       phase: "Phase 26\" x 20\" inchs",
                       hasSolution: true,
                       solutions: [
                         "Remplacement immédiat de l'outil",
                       ],
-                      status: "Resolved",
+                      status: "Résolu",
                       impact: { cost: 15000, delay: 1 }
                     }, {
                       id: 2,
                       name: "Casse outil de forage",
                       type: "Technique",
-                      severity: 2,
+                      severity: 'Moyenne',
         
                       phase: "Phase 26\" x 20\" inchs",
                       hasSolution: false,
                       solutions: [
                         "aucune solution",
                       ],
-                      status: "Resolved",
+                      status: "Résolu",
                       impact: { cost: 15000, delay: 1 }
                     }
                   ],
@@ -148,21 +148,21 @@ const data = {
                       id: 1,
                       name: "Retard livraison tubulaires",
                       type: "Logistique",
-                      severity: 1,
+                      severity: 'Mineure',
                       phase: "Phase 20\" x 16\" inchs",
                       hasSolution: false,
-                      status: "Open",
+                      status: "Résolu",
                       impact: { cost: 2000, delay: 0 }
                     },
                     {
                       id: 2,
                       name: "Conditions météo défavorables",
                       type: "Environnement",
-                      severity: 3,
+                      severity: 'Critique',
                       phase: "Phase 26\" x 20\" inchs",
                       hasSolution: true,
                       solutions: ["Arrêt temporaire des opérations"],
-                      status: "Resolved",
+                      status: "Résolu",
                       impact: { cost: 1000, delay: 0 }
                     }
                   ],
@@ -212,13 +212,13 @@ const data = {
                       id: 1,
                       name: "Casse outil de forage",
                       type: "Technique",
-                      severity: 2,
+                      severity: 'Moyenne',
                       phase: "Phase 16\" x 13\" inchs",
                       hasSolution: true,
                       solutions: [
                         "Remplacement immédiat de l'outil",
                       ],
-                      status: "Resolved",
+                      status: "Résolu",
                       impact: { cost: 15000, delay: 1 }
                     }
                   ],
@@ -248,7 +248,7 @@ const data = {
                 planned_day : 4,
                 actual_day : 5,
                 hasproblems: false,
-                problems: ['pas de problèmes'],
+                problems: [],
                 operations: [
                     {
                       startTime: "00:00",
@@ -295,21 +295,21 @@ const data = {
                         id: 1,
                         name: "Retard livraison tubulaires",
                         type: "Logistique",
-                        severity: 1,
+                        severity: 'Mineure',
                         phase: "Phase 12\" x 9\" inchs",
                         hasSolution: false,
-                        status: "Open",
+                        status: "Résolu",
                         impact: { cost: 0, delay: 7 }
                       },
                       {
                         id: 2,
                         name: "Conditions météo défavorables",
                         type: "Environnement",
-                        severity: 3,
+                        severity: 'Critique',
                         phase: "Phase 13 3/8\" casing",
                         hasSolution: true,
                         solutions: ["Arrêt temporaire des opérations"],
-                        status: "Resolved",
+                        status: "Résolu",
                         impact: { cost: 250000, delay: 8 }
                       }
                   ],
@@ -471,11 +471,11 @@ const data = {
                       id: 1,
                       name: "Problème de circulation boue",
                       type: "Technique",
-                      severity: 2,
+                      severity: 'Moyenne',
                       phase: "Phase 26\" x 20\" inchs",
                       hasSolution: true,
                       solutions: ["Augmentation densité boue", "Nettoyage puits"],
-                      status: "Resolved",
+                      status: "Résolu",
                       impact: { cost: 12000, delay: 0.5 }
                     }
                   ],
@@ -547,11 +547,11 @@ const data = {
                       id: 2,
                       name: "Déviation puits",
                       type: "Technique",
-                      severity: 3,
+                      severity: 'Critique',
                       phase: "Phase 16\" x 13\" inchs",
                       hasSolution: true,
                       solutions: ["Correction trajectoire", "Utilisation stabilisateurs"],
-                      status: "Resolved",
+                      status: "Résolu",
                       impact: { cost: 45000, delay: 2 }
                     }
                   ],
@@ -619,11 +619,11 @@ const data = {
                       id: 3,
                       name: "Perte circulation",
                       type: "Technique",
-                      severity: 2,
+                      severity: 'Moyenne',
                       phase: "Phase 12\" x 9\" inchs",
                       hasSolution: true,
                       solutions: ["Mise en place bouchons LCM"],
-                      status: "Resolved",
+                      status: "Résolu",
                       impact: { cost: 28000, delay: 1 }
                     }
                   ],
@@ -706,36 +706,36 @@ const data = {
               id: 1,
               name: "Problème de circulation boue",
               type: "Technique",
-              severity: 2,
+              severity: 'Moyenne',
               dateReported: "2022-07-02",
               phase: "Phase 26\" x 20\" inchs",
               hasSolution: true,
               solutions: ["Augmentation densité boue", "Nettoyage puits"],
-              status: "Resolved",
+              status: "Résolu",
               impact: { cost: 12000, delay: 0.5 }
             },
             {
               id: 2,
               name: "Déviation puits",
               type: "Technique",
-              severity: 3,
+              severity: 'Critique',
               dateReported: "2022-07-17",
               phase: "Phase 16\" x 13\" inchs",
               hasSolution: true,
               solutions: ["Correction trajectoire", "Utilisation stabilisateurs"],
-              status: "Resolved",
+              status: "Résolu",
               impact: { cost: 45000, delay: 2 }
             },
             {
               id: 3,
               name: "Perte circulation",
               type: "Technique",
-              severity: 2,
+              severity: 'Moyenne',
               dateReported: "2022-08-04",
               phase: "Phase 12\" x 9\" inchs",
               hasSolution: true,
               solutions: ["Mise en place bouchons LCM"],
-              status: "Resolved",
+              status: "Résolu",
               impact: { cost: 28000, delay: 1 }
             }
           ]
@@ -862,11 +862,11 @@ const data = {
                       id: 1,
                       name: "Problème de circulation boue",
                       type: "Technique",
-                      severity: 2,
+                      severity: 'Moyenne',
                       phase: "Phase 26\" x 20\" inchs",
                       hasSolution: true,
                       solutions: ["Augmentation densité boue", "Nettoyage puits"],
-                      status: "Resolved",
+                      status: "Résolu",
                       impact: { cost: 12000, delay: 0.5 }
                     }
                   ],
@@ -992,11 +992,11 @@ const data = {
                       id: 2,
                       name: "Déviation puits",
                       type: "Technique",
-                      severity: 3,
+                      severity: 'Critique',
                       phase: "Phase 16\" x 13\" inchs",
                       hasSolution: true,
                       solutions: ["Correction trajectoire", "Utilisation stabilisateurs"],
-                      status: "Resolved",
+                      status: "Résolu",
                       impact: { cost: 45000, delay: 2 }
                     }
                   ],
@@ -1089,11 +1089,11 @@ const data = {
                       id: 3,
                       name: "Perte circulation",
                       type: "Technique",
-                      severity: 2,
+                      severity: 'Moyenne',
                       phase: "Phase 12\" x 9\" inchs",
                       hasSolution: true,
                       solutions: ["Mise en place bouchons LCM"],
-                      status: "Resolved",
+                      status: "Résolu",
                       impact: { cost: 28000, delay: 1 }
                     }
                   ],
@@ -1176,36 +1176,36 @@ const data = {
               id: 1,
               name: "Problème de circulation boue",
               type: "Technique",
-              severity: 2,
+              severity: 'Moyenne',
               dateReported: "2022-07-02",
               phase: "Phase 26\" x 20\" inchs",
               hasSolution: true,
               solutions: ["Augmentation densité boue", "Nettoyage puits"],
-              status: "Resolved",
+              status: "Résolu",
               impact: { cost: 12000, delay: 0.5 }
             },
             {
               id: 2,
               name: "Déviation puits",
               type: "Technique",
-              severity: 3,
+              severity: 'Critique',
               dateReported: "2022-07-17",
               phase: "Phase 16\" x 13\" inchs",
               hasSolution: true,
               solutions: ["Correction trajectoire", "Utilisation stabilisateurs"],
-              status: "Resolved",
+              status: "Résolu",
               impact: { cost: 45000, delay: 2 }
             },
             {
               id: 3,
               name: "Perte circulation",
               type: "Technique",
-              severity: 2,
+              severity: 'Moyenne',
               dateReported: "2022-08-04",
               phase: "Phase 12\" x 9\" inchs",
               hasSolution: true,
               solutions: ["Mise en place bouchons LCM"],
-              status: "Resolved",
+              status: "Résolu",
               impact: { cost: 28000, delay: 1 }
             }
           ]
@@ -1330,11 +1330,11 @@ const data = {
                         id: 1,
                         name: "Problème de circulation boue",
                         type: "Technique",
-                        severity: 2,
+                        severity: 'Moyenne',
                         phase: "Phase 26\" x 20\" inchs",
                         hasSolution: true,
                         solutions: ["Augmentation densité boue", "Nettoyage puits"],
-                        status: "Resolved",
+                        status: "Résolu",
                         impact: { cost: 12000, delay: 0.5 }
                       }
                     ],
@@ -1406,11 +1406,11 @@ const data = {
                         id: 2,
                         name: "Déviation puits",
                         type: "Technique",
-                        severity: 3,
+                        severity: 'Critique',
                         phase: "Phase 16\" x 13\" inchs",
                         hasSolution: true,
                         solutions: ["Correction trajectoire", "Utilisation stabilisateurs"],
-                        status: "Resolved",
+                        status: "Résolu",
                         impact: { cost: 45000, delay: 2 }
                       }
                     ],
@@ -1478,11 +1478,11 @@ const data = {
                         id: 3,
                         name: "Perte circulation",
                         type: "Technique",
-                        severity: 2,
+                        severity: 'Moyenne',
                         phase: "Phase 12\" x 9\" inchs",
                         hasSolution: true,
                         solutions: ["Mise en place bouchons LCM"],
-                        status: "Resolved",
+                        status: "Résolu",
                         impact: { cost: 28000, delay: 1 }
                       }
                     ],
@@ -1565,42 +1565,41 @@ const data = {
                 id: 1,
                 name: "Problème de circulation boue",
                 type: "Technique",
-                severity: 2,
+                severity: 'Moyenne',
                 dateReported: "2022-07-02",
                 phase: "Phase 26\" x 20\" inchs",
                 hasSolution: true,
                 solutions: ["Augmentation densité boue", "Nettoyage puits"],
-                status: "Resolved",
+                status: "Résolu",
                 impact: { cost: 12000, delay: 0.5 }
               },
               {
                 id: 2,
                 name: "Déviation puits",
                 type: "Technique",
-                severity: 3,
+                severity: 'Critique',
                 dateReported: "2022-07-17",
                 phase: "Phase 16\" x 13\" inchs",
                 hasSolution: true,
                 solutions: ["Correction trajectoire", "Utilisation stabilisateurs"],
-                status: "Resolved",
+                status: "Résolu",
                 impact: { cost: 45000, delay: 2 }
               },
               {
                 id: 3,
                 name: "Perte circulation",
                 type: "Technique",
-                severity: 2,
+                severity: 'Moyenne',
                 dateReported: "2022-08-04",
                 phase: "Phase 12\" x 9\" inchs",
                 hasSolution: true,
                 solutions: ["Mise en place bouchons LCM"],
-                status: "Resolved",
+                status: "Résolu",
                 impact: { cost: 28000, delay: 1 }
               }
             ]
           },
-                  // Puit C - Terminé
-        {
+          {
           id: 5,
           name: "Puit C",
           siteName: "Champ Ouest",
@@ -1731,7 +1730,7 @@ const data = {
               id: 1,
               name: "Retard livraison ciment",
               type: "Logistique",
-              severity: 1,
+              severity: 'Mineure',
               dateReported: "2022-09-16",
               phase: "Phase 26\" x 20\" inchs",
               hasSolution: true,
@@ -1743,7 +1742,7 @@ const data = {
               id: 2,
               name: "Panne générateur",
               type: "Technique",
-              severity: 3,
+              severity: 'Critique',
               dateReported: "2022-10-15",
               phase: "Phase 12\" x 9\" inchs",
               hasSolution: true,
@@ -1753,15 +1752,16 @@ const data = {
             }
           ]
         },
+        
 
     ],
   
     metadata: {
         problemTypes: ["Technique", "Logistique", "Sécurité", "Personnel", "Environnement"],
         severityLevels: [
-          { id: 1, label: "Faible" },
+          { id: 1, label: "Mineure" },
           { id: 2, label: "Moyenne" },
-          { id: 3, label: "Élevée" }
+          { id: 3, label: "Critique" }
         ],
         phaseTypes: [
           "26\" x 20\" inchs",
