@@ -782,6 +782,7 @@ const ReportSubmission = () => {
           phaseId = 0; // Ou null si tu préfères
           break;
       }
+   
       const formattedProgress = `${newReport.progress} ft en ${newReport.timeSpent} h`;
       const formattedWorkDone = newReport.workDone.map((entry) => {
         const start = entry.startTime || "";
@@ -805,35 +806,71 @@ const ReportSubmission = () => {
       console.log("Rapport ajouté :", savedReport);
 
       const updatedDrillWell = { ...selectedWell }; // clonage
-      const cumulativeCost = parseFloat(newReport.dailyCost) + parseFloat(updatedDrillWell.totalCost);
       const depth = newReport.depth || "";
       const actualDay = newReport.actualDay || 0;
+      const daily = parseFloat(newReport.dailyCost || 0);
+      const currentCumulative = parseFloat(newReport.cumulativeCost || 0); 
       updatedDrillWell.actualDay = actualDay;
-      updatedDrillWell.totalCost= cumulativeCost;
+     
       updatedDrillWell.depth = depth;
       updatedDrillWell.phaseId = phaseId;
+      const updatedCost=currentCumulative + daily;
+      updatedDrillWell.totalCost= updatedCost;
+      const depthVal = parseFloat(depth);
+      const cumDepthVal = parseFloat(updatedDrillWell.plannedDepth4);
+
+      const ratio = depthVal / cumDepthVal;
+      updatedDrillWell.progress = Math.floor(Math.min(ratio, 1) * 100);
 
       switch (phaseId) {
         case 1:
-          updatedDrillWell.cumulativeCost1 = cumulativeCost;
+          updatedDrillWell.cumulativeCost1 = updatedCost;
           updatedDrillWell.actualDay1 = actualDay;
           updatedDrillWell.depth1 = depth;
+          if (updatedCost>updatedDrillWell.plannedCost1){
+            updatedDrillWell.status="At Risk";
+          }
+          if (actualDay>updatedDrillWell.plannedDay1){
+            updatedDrillWell.status="Delayed";
+          }
           break;
         case 2:
-          updatedDrillWell.cumulativeCost2 = cumulativeCost;
+          updatedDrillWell.cumulativeCost2 = updatedCost;
           updatedDrillWell.actualDay2 = actualDay;
           updatedDrillWell.depth2 = depth;
+          if (updatedCost>updatedDrillWell.plannedCost2){
+            updatedDrillWell.status="At Risk";
+          }
+          if (actualDay>updatedDrillWell.plannedDay2){
+            updatedDrillWell.status="Delayed";
+          }
+          
           break;
         case 3:
-          updatedDrillWell.cumulativeCost3 = cumulativeCost;
+          updatedDrillWell.cumulativeCost3 = updatedCost;
           updatedDrillWell.actualDay3 = actualDay;
           updatedDrillWell.depth3 = depth;
+          if (updatedCost>updatedDrillWell.plannedCost3){
+            updatedDrillWell.status="At Risk";
+          }
+          if (actualDay>updatedDrillWell.plannedDay3){
+            updatedDrillWell.status="Delayed";
+          }
           break;
         case 4:
-          updatedDrillWell.cumulativeCost4 = cumulativeCost;
+          updatedDrillWell.cumulativeCost4 = updatedCost;
           updatedDrillWell.actualDay4 = actualDay;
           updatedDrillWell.depth4 = depth;
+          if (updatedCost>updatedDrillWell.plannedCost4){
+            updatedDrillWell.status="At Risk";
+          }
+          if (actualDay>updatedDrillWell.plannedDay4){
+            updatedDrillWell.status="Delayed";
+          }
           break;
+      }
+      if (updatedDrillWell.progress >= 100){
+        updatedDrillWell.status="Completed";
       }
 
       await axios.put(
@@ -876,15 +913,16 @@ const ReportSubmission = () => {
     setNewReport({
       id: null,
       reportDate: new Date().toISOString().split("T")[0],
-      depth:  "",
+      
       progress: "",
       timeSpent:"",
       workDone: [{ startTime: "", endTime: "", description: "" }],
-      dailyCost: 0,
+      
       plannedDay: 0,
+      cumulativeCost:selectedWell.totalCost,
       actualDay: 0,
       phaseId:0,
-      phaseName:  "",
+      
     });
     setProblems([]);
   };
@@ -1043,10 +1081,12 @@ const ReportSubmission = () => {
             <p className="text-sm text-gray-600">Profondeur (ft)</p>
             <input
               type="number"
+               
               value={newReport.depth}
               onChange={(e) =>
                 setNewReport({ ...newReport, depth: e.target.value })
               }
+              required
               className="font-semibold w-full p-1 border rounded-md"
               placeholder="Profondeur en pieds"
             />
@@ -1193,6 +1233,7 @@ const ReportSubmission = () => {
           <div className="bg-blue-50 p-4 rounded-lg">
             <h3 className="font-semibold text-blue-800 mb-2">Phase</h3>
             <select
+              required 
               value={newReport.phaseName}
               onChange={(e) =>
                 setNewReport({ ...newReport, phaseName: e.target.value })
@@ -1213,6 +1254,7 @@ const ReportSubmission = () => {
             </h3>
             <input
               type="number"
+              required 
               value={newReport.dailyCost}
               onChange={(e) =>
                 setNewReport({ ...newReport, dailyCost: e.target.value })
@@ -1220,7 +1262,24 @@ const ReportSubmission = () => {
               className="w-full px-1  py-1.5 border rounded-md "
               placeholder="Coût en dollars"
             />
+            <h3 className="font-semibold text-green-800 mb-2">
+              Coût total ($)
+            </h3>
+            <input
+              type="number"
+              value={
+                parseFloat(newReport.cumulativeCost || 0) + parseFloat(newReport.dailyCost || 0)
+              }
+              onChange={(e) =>
+                setNewReport({ ...newReport, cumulativeCost: e.target.value })
+              }
+              readOnly
+              className="w-full px-1  py-1.5 border rounded-md "
+              placeholder="Coût en dollars"
+            />
+            
           </div>
+         
           <div className="bg-yellow-50 p-4 rounded-lg">
             <h3 className="font-semibold text-yellow-800 mb-2">
               Jour prévu :{" "}
@@ -1237,6 +1296,7 @@ const ReportSubmission = () => {
               Jour réel :{" "}
               <input
                 type="number"
+                required 
                 value={newReport.actualDay}
                 onChange={(e) =>
                   setNewReport({ ...newReport, actualDay: e.target.value })

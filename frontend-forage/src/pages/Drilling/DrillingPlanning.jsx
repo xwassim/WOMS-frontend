@@ -9,6 +9,12 @@ const DrillingPlanning = () => {
   const phases = [
     {
       phase: '26" x 20" inchs',
+      cumulativeCost :'1,025,000',
+      Cost :'1,025,000',
+      cumulativeDuration:'2',
+      Duration :'2',
+      cumulativeDepth:'3300',
+      Depth:'3300',
       operations: [
         {
           operation: 'Drilling 26" hole into Albian',
@@ -28,6 +34,12 @@ const DrillingPlanning = () => {
     },
     {
       phase: '16" x 13" inchs',
+      cumulativeCost:'3,805,000',
+      Cost : '2,780,000',
+      cumulativeDuration:'15',
+      Duration:'13',
+      cumulativeDepth:'6300',
+      Depth:'3000',
       operations: [
         {
           operation: 'Drilling 16" hole to base Dembaba',
@@ -47,6 +59,12 @@ const DrillingPlanning = () => {
     },
     {
       phase: '12" x 9" inchs',
+      cumulativeCost :'5,860,000',
+      Cost : '2,055,000',
+      cumulativeDuration:'23',
+      Duration:'8',
+      cumulativeDepth:'9100',
+      Depth:'2800',
       operations: [
         {
           operation: 'Drilling 12 1/4" section to top Tahara',
@@ -66,6 +84,12 @@ const DrillingPlanning = () => {
     },
     {
       phase: '8" x 7" inchs',
+      cumulativeCost :'9,265,000',
+      Cost :'3,405,000',
+      cumulativeDuration:'57',
+      Duration:'34',
+      cumulativeDepth:'9600',
+      Depth : '500',
       operations: [
         {
           operation: 'Drilling 8 1/2" section',
@@ -134,39 +158,36 @@ const DrillingPlanning = () => {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phase</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Operation</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coût (USD)</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coût cummulés</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Délais (jours)</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Délais cummulés</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profondeur (ft)</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profondeur cummulées</th>
+
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {phases.map((phase, phaseIndex) => (
               <React.Fragment key={phaseIndex}>
-                {phase.operations.map((op, opIndex) => (
-                  <tr key={`${phaseIndex}-${opIndex}`}>
-                    {opIndex === 0 ? (
-                      <td rowSpan={phase.operations.length} className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 align-top">
-                        {phase.phase}
-                      </td>
-                    ) : null}
-                    <td className="px-6 py-4 text-sm text-gray-500">{op.operation}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{op.cost}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{op.cumulativeCost}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{op.duration}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{op.cumulativeDuration}</td>
+                
+                  <tr key={`${phaseIndex}`}>
+                 
+                    <td rowSpan={1} className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 align-top">
+                      {phase.phase}
+                    </td>
+                
+                    <td className="px-6 py-4 text-sm text-gray-500">{phase.Cost}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{phase.cumulativeCost}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{phase.Duration}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{phase.cumulativeDuration}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{phase.Depth}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{phase.cumulativeDepth}</td>
                   </tr>
-                ))}
+                
               </React.Fragment>
             ))}
-            <tr className="bg-gray-50">
-              <td colSpan="2" className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Total</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"></td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">10,000,000</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"></td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">69</td>
-            </tr>
+      
           </tbody>
         </table>
       </div>

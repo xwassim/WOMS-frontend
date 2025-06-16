@@ -97,7 +97,7 @@ const OperatorView = () => {
     if (searchTerm.trim() !== "") {
       results = results.filter((site) => {
         return Object.values(site).some((val) =>
-          val.toString().toLowerCase().includes(searchTerm.toLowerCase())
+          val?.toString().toLowerCase().includes(searchTerm.toLowerCase())
         );
       });
     }
@@ -262,12 +262,7 @@ const OperatorView = () => {
                       >
                         Dashboard
                       </Link>
-                      <Link
-                        to={`/well/${site.id}/dashboard`}
-                        className="text-green-600 hover:text-green-800 underline"
-                      >
-                        Détails
-                      </Link>
+                  
                       <Link
                         to={`/planning`} // Updated to dynamic route
                         className="text-orange-600 hover:text-orange-800 underline"

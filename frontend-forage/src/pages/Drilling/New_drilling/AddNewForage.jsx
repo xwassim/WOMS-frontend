@@ -86,20 +86,7 @@ const AddNewForage = () => {
           </div>
         </div>
 
-        <div className="mb-6">
-          <label className="block text-gray-700 mb-1">Progression</label>
-          <div className="flex items-center space-x-4">
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={progress}
-              onChange={(e) => setProgress(e.target.value)}
-              className="w-full"
-            />
-            <span className="text-gray-700">{progress}%</span>
-          </div>
-        </div>
+        
 
         <div className="mb-6">
           <label className="block text-gray-700 mb-1">Date de creation</label>
