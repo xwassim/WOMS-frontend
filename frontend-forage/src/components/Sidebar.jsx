@@ -1,46 +1,45 @@
-
-import React, { useState } from "react";
+import React, { useState,useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import {
-  FaHome,
-  FaSignOutAlt,
-  FaFileAlt,
-  FaPlusCircle,
-} from "react-icons/fa";
+import { FaHome, FaSignOutAlt, FaFileAlt, FaPlusCircle } from "react-icons/fa";
 import logo from "../assets/Sonatrach.png";
 
 function Sidebar({ children }) {
   const [showSignOutModal, setShowSignOutModal] = useState(false);
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const navigate = useNavigate();
 
+  // Mettre à jour l'année dynamiquement
+  useEffect(() => {
+    setCurrentYear(new Date().getFullYear());
+  }, []);
+
   const handleSignOut = () => {
-    // Here you would typically handle the sign-out logic
-    // For example, clearing auth tokens, user data, etc.
-    console.log("User signed out");
+    // Logique de déconnexion
+    console.log("Utilisateur déconnecté");
     setShowSignOutModal(false);
-    navigate("/login"); // Redirect to login page after sign out
+    navigate("/login");
   };
 
   return (
     <div className="flex min-h-screen w-full">
-      {/* Sign Out Confirmation Modal */}
+      {/* Modal de confirmation de déconnexion */}
       {showSignOutModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
-            <h3 className="text-lg font-semibold mb-4">Confirm Sign Out</h3>
-            <p className="mb-6">Are you sure you want to sign out?</p>
+            <h3 className="text-lg font-semibold mb-4">Confirmer la déconnexion</h3>
+            <p className="mb-6">Êtes-vous sûr de vouloir vous déconnecter ?</p>
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowSignOutModal(false)}
                 className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
               >
-                Cancel
+                Annuler
               </button>
               <button
                 onClick={handleSignOut}
                 className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
               >
-                Sign Out
+                Déconnexion
               </button>
             </div>
           </div>
@@ -49,8 +48,8 @@ function Sidebar({ children }) {
 
       <div className="w-64 bg-[#1C2434] text-white shadow-lg">
         <div className="p-5 border-b border-gray-950">
-          <h1 className="text-xl text-center font-semibold">
-            Drilling Management
+          <h1 className="text-xl text-center font-semibold tracking-wide">
+            ForageVision
           </h1>
         </div>
         <div className="flex justify-center items-center p-4">
@@ -85,20 +84,33 @@ function Sidebar({ children }) {
                 <span>Soumettre Rapport</span>
               </NavLink>
             </li>
+            <li>
+              <NavLink
+                to="/planning"
+                className={({ isActive }) =>
+                  `flex items-center p-2 rounded-lg ${
+                    isActive ? "bg-[#3C50E0]" : "hover:bg-[#3C50E0]"
+                  }`
+                }
+              >
+                <FaFileAlt className="mr-3" />
+                <span>Planning</span>
+              </NavLink>
+            </li>
           </ul>
         </nav>
-        <div className="mt-[400px] mx-4">
+        <div className="mt-[300px] mx-4">
           <button
             onClick={() => setShowSignOutModal(true)}
             className="w-full flex items-center p-2 rounded-lg bg-[#1C2434] hover:bg-[#3C50E0]"
           >
             <FaSignOutAlt className="mr-3 h-5 w-5" />
-            <span>Sign Out</span>
+            <span>Déconnexion</span>
           </button>
         </div>
         <div>
           <p className="text-center text-xs text-gray-400 mt-4">
-            © 2025 ITech. All rights reserved.
+            © {currentYear} ITech. Tous droits réservés.
           </p>
         </div>
       </div>

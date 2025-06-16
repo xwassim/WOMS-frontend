@@ -35,6 +35,24 @@ const OperatorView = () => {
   const [progressFilter, setProgressFilter] = useState("all");
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
 
+
+
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [siteToDelete, setSiteToDelete] = useState(null);
+
+  // Gestion de la suppression
+  const handleDeleteClick = (site) => {
+    setSiteToDelete(site);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = () => {
+    // Ici vous ajouterez la logique de suppression réelle
+    console.log("Suppression du site:", siteToDelete);
+    setShowDeleteDialog(false);
+    setSiteToDelete(null);
+  };
+
   const [drillingSites, setDrillingSites] = useState([]);
   useEffect(() => {
     axios.get("http://localhost:9090/api/drillwells")
@@ -263,18 +281,20 @@ const OperatorView = () => {
                         Dashboard
                       </Link>
                   
-                      <Link
-                        to={`/planning`} // Updated to dynamic route
-                        className="text-orange-600 hover:text-orange-800 underline"
-                      >
-                        Planning
-                      </Link>
+                     
                       <Link
                         to={`/well/${site.id}/reports`} // Updated to dynamic route
                         className="text-purple-600 hover:text-purple-800 underline"
                       >
                         Rapports
                       </Link>
+                      <button
+                        onClick={() => handleDeleteClick(site)}
+                        className="text-red-600 hover:text-red-800 underline flex items-center"
+                        title="Supprimer"
+                      >
+                        Supprimer
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -323,6 +343,60 @@ const OperatorView = () => {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        PaperProps={{
+          style: {
+            borderRadius: 16,
+            padding: "16px",
+            minWidth: "400px",
+          },
+        }}
+      >
+        <DialogTitle>
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl text-gray-700">Confirmer la suppression</h2>
+            <button
+              onClick={() => setShowDeleteDialog(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <FaTimes />
+            </button>
+          </div>
+        </DialogTitle>
+        <DialogContent>
+          <p className="text-gray-700 mt-4">
+            Êtes-vous sûr de vouloir supprimer le site{" "}
+            <strong>{siteToDelete?.wellName}</strong> ?
+          </p>
+          <p className="text-sm text-gray-500 mt-2">
+            Cette action est irréversible et supprimera toutes les données
+            associées à ce site.
+          </p>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setShowDeleteDialog(false)}
+            style={{ backgroundColor: "#ececec", color: "#6B7280" }}
+          >
+            Annuler
+          </Button>
+          <Button
+            onClick={confirmDelete}
+            style={{
+              backgroundColor: "#e70000",
+              color: "white",
+              radius: "15px",
+            }}
+            variant="contained"
+          >
+            Confirmer la suppression
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Filter Dialog */}
       <Dialog
