@@ -1,37 +1,170 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AlertOctagon, ChevronDown, ChevronUp, Filter, Check } from 'lucide-react';
+import { useParams, useLocation } from 'react-router-dom';
+import axios from 'axios';
 
-const CriticalProblemsCard = ({ well }) => {
+const CriticalProblemsCard = () => {
+  const { wellId } = useParams();
+  const location = useLocation();
+  const [problems, setProblems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [expanded, setExpanded] = useState(null);
   const [filters, setFilters] = useState({
-    scope: 'all', // 'all' ou 'phase'
+    scope: 'all',
     phase: 'all',
-    severity: 'all', // 'all', 'Critique', 'Moyenne', 'Mineure'
+    severity: 'all',
     type: 'all',
     withSolutions: true
   });
   const [showFilters, setShowFilters] = useState(false);
 
-  // Tous les problèmes avec leur phase
-  const allProblems = well.phases.flatMap(phase => 
-    phase.dailyReports.flatMap(report => 
-      (report.problems || []).map(problem => ({ 
-        ...problem, 
-        phaseName: phase.name,
-        reportDate: report.date
-      }))
-    )
-  );
+  // Fonction pour convertir la gravité numérique en texte
+  const getSeverityText = (severity) => {
+    switch (severity) {
+      case 1: return 'Mineure';
+      case 2: return 'Moyenne';
+      case 3: return 'Critique';
+      default: return 'Non spécifiée';
+    }
+  };
 
-  // Appliquer les filtres
-  const filteredProblems = allProblems.filter(problem => {
+  // Fonction pour obtenir la classe de couleur en fonction de la gravité
+  const getSeverityColor = (severity) => {
+    switch (severity) {
+      case 1: return 'text-green-600';
+      case 2: return 'text-amber-600';
+      case 3: return 'text-red-600';
+      default: return 'text-gray-600';
+    }
+  };
+
+  // Fonction pour obtenir la classe de couleur du point en fonction de la gravité
+  const getSeverityDotColor = (severity) => {
+    switch (severity) {
+      case 1: return 'bg-green-500';
+      case 2: return 'bg-amber-500';
+      case 3: return 'bg-red-500';
+      default: return 'bg-gray-500';
+    }
+  };
+
+  useEffect(() => {
+    console.log('Location:', location);
+    console.log('Pathname:', location.pathname);
+    
+    // Extract ID from the URL path
+    
+
+    const fetchProblems = async () => {
+      if (!wellId) {
+        console.error('No well ID found in URL');
+        setError('No well ID found in URL');
+        setLoading(false);
+        return;
+      }
+
+      console.log('Fetching problems for well ID:', wellId);
+      try {
+        setLoading(true);
+        console.log('Making API request to:', `http://localhost:9090/api/problemes/drillwell/${wellId}`);
+        
+        const response = await axios.get(`http://localhost:9090/api/problemes/drillwell/${wellId}`);
+        console.log('API Response:', response);
+        console.log('Response data:', response.data);
+        
+        if (!response.data) {
+          console.error('No data received from API');
+          throw new Error('No data received from API');
+        }
+
+        if (!Array.isArray(response.data)) {
+          console.error('Received data is not an array:', response.data);
+          throw new Error('Invalid data format received');
+        }
+
+        console.log('Setting problems state with:', response.data);
+        setProblems(response.data);
+        setError(null);
+      } catch (err) {
+        console.error('Error details:', {
+          message: err.message,
+          response: err.response,
+          status: err.response?.status,
+          data: err.response?.data
+        });
+        setError(`Failed to load problems: ${err.message}`);
+      } finally {
+        setLoading(false);
+        console.log('Loading state set to false');
+      }
+    };
+
+    fetchProblems();
+  }, [location.pathname]); // Changed dependency to location.pathname
+
+  // Log when problems state changes
+  useEffect(() => {
+    console.log('Problems state updated:', problems);
+  }, [problems]);
+
+  // Log when filters change
+  useEffect(() => {
+    console.log('Filters updated:', filters);
+  }, [filters]);
+
+  if (loading) {
+    console.log('Rendering loading state');
     return (
+      <div className="bg-white rounded-xl shadow-md p-6">
+        <div className="flex justify-center items-center h-40">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3C50E0]"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    console.log('Rendering error state:', error);
+    return (
+      <div className="bg-white rounded-xl shadow-md p-6">
+        <div className="flex flex-col items-center justify-center h-40 text-red-600">
+          <AlertOctagon className="w-8 h-8 mb-2" />
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!problems || problems.length === 0) {
+    console.log('No problems available');
+    return (
+      <div className="bg-white rounded-xl shadow-md p-6">
+        <div className="flex flex-col items-center justify-center h-40 text-gray-500">
+          <p>No problems available</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Log filtered problems
+  const filteredProblems = problems.filter(problem => {
+    console.log('Problem data:', {
+      name: problem.name,
+      severity: problem.severity,
+      type: problem.type,
+      phaseName: problem.phaseName
+    });
+    const matches = (
       (filters.scope === 'all' || problem.phaseName === filters.phase) &&
-      (filters.severity === 'all' || problem.severity === filters.severity) &&
+      (filters.severity === 'all' || problem.severity === parseInt(filters.severity)) &&
       (filters.type === 'all' || problem.type === filters.type) &&
       (!filters.withSolutions || (problem.solutions && problem.solutions.length > 0))
     );
+    return matches;
   });
+
+  console.log('Filtered problems:', filteredProblems);
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Date inconnue';
@@ -43,9 +176,16 @@ const CriticalProblemsCard = ({ well }) => {
   };
 
   // Options pour les filtres
-  const severityOptions = ['Critique', 'Moyenne', 'Mineure'];
-  const typeOptions = [...new Set(allProblems.map(p => p.type))].filter(Boolean);
-  const phaseOptions = well.phases.map(phase => phase.name);
+  const severityOptions = [
+    { value: 1, label: 'Mineure' },
+    { value: 2, label: 'Moyenne' },
+    { value: 3, label: 'Critique' }
+  ];
+  const typeOptions = [...new Set(problems.map(p => p.type))].filter(Boolean);
+  const phaseOptions = [...new Set(problems.map(p => p.phaseName))].filter(Boolean);
+
+  // Log available severities
+  console.log('Available severities in data:', [...new Set(problems.map(p => p.severity))]);
 
   return (
     <div className="bg-white rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg">
@@ -106,8 +246,8 @@ const CriticalProblemsCard = ({ well }) => {
                 className="w-full p-2 border border-gray-300 rounded-md text-sm"
               >
                 <option value="all">Toutes</option>
-                {severityOptions.map((sev, i) => (
-                  <option key={i} value={sev}>{sev}</option>
+                {severityOptions.map((sev) => (
+                  <option key={sev.value} value={sev.value}>{sev.label}</option>
                 ))}
               </select>
             </div>
@@ -153,7 +293,7 @@ const CriticalProblemsCard = ({ well }) => {
         )}
         {filters.severity !== 'all' && (
           <span className="text-xs font-medium px-2 py-1 bg-purple-100 text-purple-800 rounded-full">
-            Gravité: {filters.severity}
+            Gravité: {getSeverityText(parseInt(filters.severity))}
           </span>
         )}
         {filters.type !== 'all' && (
@@ -185,10 +325,7 @@ const CriticalProblemsCard = ({ well }) => {
                   onClick={() => toggleExpand(index)}
                 >
                   <div className="flex items-center">
-                    <div className={`w-2 h-2 rounded-full mr-2 ${
-                      problem.severity === 'Critique' ? 'bg-red-500' :
-                      problem.severity === 'Moyenne' ? 'bg-amber-500' : 'bg-green-500'
-                    }`}></div>
+                    <div className={`w-2 h-2 rounded-full mr-2 ${getSeverityDotColor(problem.severity)}`}></div>
                     <span className="font-medium">{problem.name}</span>
                     {problem.solutions?.length > 0 && (
                       <Check className="w-4 h-4 text-green-500 ml-2" />
@@ -211,23 +348,20 @@ const CriticalProblemsCard = ({ well }) => {
                           <span className="font-medium">Type:</span> {problem.type || 'Non spécifié'}
                         </p>
                         <p className="text-sm text-gray-700 mb-2">
-                          <span className="font-medium">Phase:</span> {problem.phaseName}
+                          <span className="font-medium">Phase:</span> {problem.dailyReport.phaseName}
                         </p>
                         <p className="text-sm text-gray-700 mb-2">
                           <span className="font-medium">Gravité:</span>{' '}
-                          <span className={
-                            problem.severity === 'Critique' ? 'text-red-600' :
-                            problem.severity === 'Moyenne' ? 'text-amber-600' : 'text-green-600'
-                          }>
-                            {problem.severity}
+                          <span className={getSeverityColor(problem.gravite)}>
+                            {getSeverityText(problem.gravite)}
                           </span>
                         </p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-700 mb-2">
                           <span className="">Statut:</span>{' '}
-                          <span className={problem.status === 'Résolu' ? 'text-green-600' : 'text-amber-600'}>
-                            {problem.status}
+                          <span className="text-green-600">
+                            Résolu
                           </span>
                         </p>
                         
@@ -274,5 +408,4 @@ const CriticalProblemsCard = ({ well }) => {
   );
 };
 
-// export default ProblemsListCard;
 export default CriticalProblemsCard;

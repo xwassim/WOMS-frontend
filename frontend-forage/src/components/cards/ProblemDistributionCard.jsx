@@ -1,29 +1,67 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PieChart, Filter, ChevronDown, ChevronUp } from 'lucide-react';
 import DonutChart from '../charts/DonutChart';
+import axios from 'axios';
+import { useParams } from 'react-router-dom';
 
-const ProblemDistributionCard = ({ well }) => {
-  const [distributionType, setDistributionType] = useState('severity'); // 'severity' ou 'type'
-  const [selectedPhase, setSelectedPhase] = useState('all'); // 'all' ou ID de phase
+const ProblemDistributionCard = () => {
+  const { wellId } = useParams();
+  const [distributionType, setDistributionType] = useState('severity');
+  const [selectedPhase, setSelectedPhase] = useState('all');
   const [showPhaseDropdown, setShowPhaseDropdown] = useState(false);
+  const [problems, setProblems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [well, setWell] = useState(null);
 
   // Types de problèmes prédéfinis
   const predefinedTypes = ["Technique", "Logistique", "Sécurité", "Personnel", "Environnement"];
 
+  // Récupérer les données du puits et les problèmes depuis l'API
+  useEffect(() => {
+    const fetchWellAndProblems = async () => {
+      try {
+        setLoading(true);
+        // Fetch well data
+        const wellResponse = await axios.get(`http://localhost:9090/api/drillwells/${wellId}`);
+        setWell(wellResponse.data);
+        
+        // Fetch problems
+        console.log("Fetching problems for well ID:", wellId);
+        const response = await axios.get(`http://localhost:9090/api/problemes/drillwell/${wellId}`);
+        console.log("API Response:", response);
+        console.log("Problems data:", response.data);
+        setProblems(response.data);
+        setError(null);
+      } catch (err) {
+        console.error("Erreur lors du chargement des données:", err);
+        console.error("Error details:", {
+          message: err.message,
+          response: err.response,
+          status: err.response?.status,
+          data: err.response?.data
+        });
+        setError("Impossible de charger les données");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWellAndProblems();
+  }, [wellId]);
+
   // Obtenir toutes les phases pour le menu déroulant
-  const allPhases = well.phases.map(phase => ({
+  const allPhases = well?.phases?.map(phase => ({
     id: phase.id,
     name: phase.name
-  }));
+  })) || [];
 
   // Calculer la distribution des problèmes selon le type sélectionné et la phase
   const calculateProblemDistribution = () => {
     // Filtrer les problèmes par phase sélectionnée si différent de 'all'
-    const allProblems = well.phases
-      .filter(phase => selectedPhase === 'all' || phase.id === selectedPhase)
-      .flatMap(phase => 
-        phase.dailyReports.flatMap(report => report.problems || [])
-      );
+    const filteredProblems = problems.filter(problem => 
+      selectedPhase === 'all' || problem.dailyReport?.phase?.id === selectedPhase
+    );
 
     if (distributionType === 'severity') {
       // Compter par gravité
@@ -33,10 +71,10 @@ const ProblemDistributionCard = ({ well }) => {
         'Mineure': 0
       };
 
-      allProblems.forEach(problem => {
-        if (['Critique', 'Moyenne', 'Mineure'].includes(problem.severity)) {
-          severityCounts[problem.severity]++;
-        }
+      filteredProblems.forEach(problem => {
+        if (problem.gravite === 3) severityCounts['Critique']++;
+        else if (problem.gravite === 2) severityCounts['Moyenne']++;
+        else if (problem.gravite === 1) severityCounts['Mineure']++;
       });
 
       const totalProblems = Object.values(severityCounts).reduce((sum, count) => sum + count, 0);
@@ -57,7 +95,7 @@ const ProblemDistributionCard = ({ well }) => {
       const typeCounts = {};
       let otherTypesCount = 0;
       
-      allProblems.forEach(problem => {
+      filteredProblems.forEach(problem => {
         const type = problem.type || 'Non spécifié';
         if (predefinedTypes.includes(type)) {
           typeCounts[type] = (typeCounts[type] || 0) + 1;
@@ -81,7 +119,7 @@ const ProblemDistributionCard = ({ well }) => {
         '#FF9800', '#607D8B', '#795548', '#E91E63', '#00BCD4'
       ];
 
-      const totalProblems = allProblems.length;
+      const totalProblems = filteredProblems.length;
       
       return {
         data: sortedTypes.map(([type, count], index) => ({
@@ -100,6 +138,26 @@ const ProblemDistributionCard = ({ well }) => {
 
   const problemDistribution = calculateProblemDistribution();
 
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl shadow-md p-6">
+        <div className="flex items-center justify-center h-[250px]">
+          <p className="text-gray-500">Chargement des données...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-xl shadow-md p-6">
+        <div className="flex items-center justify-center h-[250px]">
+          <p className="text-red-500">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-xl shadow-md p-6 transition-all duration-300 hover:shadow-lg">
       <div className="flex flex-col gap-4 mb-4">
@@ -116,7 +174,7 @@ const ProblemDistributionCard = ({ well }) => {
               onClick={() => setShowPhaseDropdown(!showPhaseDropdown)}
               className="flex items-center gap-2 px-3 py-1 bg-gray-200 text-gray-700 rounded-md text-md"
             >
-              {selectedPhase === 'all' ? 'Toutes les phases' : well.phases.find(p => p.id === selectedPhase)?.name || 'Sélectionner une phase'}
+              {selectedPhase === 'all' ? 'Toutes les phases' : well?.phases.find(p => p.id === selectedPhase)?.name || 'Sélectionner une phase'}
               {showPhaseDropdown ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
             {showPhaseDropdown && (

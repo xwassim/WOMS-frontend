@@ -1,4 +1,5 @@
 
+
 import React from "react";
 import { useMemo,useEffect,useState} from "react";
 import { useParams } from 'react-router-dom';
@@ -18,14 +19,9 @@ import axios from "axios";
 const Dashboard = () => {
   const { wellId } = useParams();
   
-  const selectedWell = useMemo(
-    () => data.drillWells.find((well) => well.id === Number(wellId)),
-    [wellId]
-  );
 
-  if (!selectedWell) {
-    return <div className="p-4 text-red-500">Well not found</div>;
-  }
+
+ 
 
  
   return (
@@ -35,9 +31,9 @@ const Dashboard = () => {
         <DrillView />
       </div>
       <div className="mt-6  grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <ProblemDistributionCard well={selectedWell} />
+        <ProblemDistributionCard  />
         <div className="col-span-1 lg:col-span-2">
-          <CriticalProblemsCard well={selectedWell} />
+          <CriticalProblemsCard />
         </div>
       </div>  
     </div>
@@ -53,7 +49,7 @@ const ReportSummaryCard = ({ well }) => (
       </h2>
       <BarChart className="w-5 h-5 text-blue-600" />
     </div>
-    <div className="mt-2 space-y-4">
+    {/* <div className="mt-2 space-y-4">
       <SummaryItem 
         label="Daily Reports"
         value={well.phases.flatMap((p) => p.dailyReports).length}
@@ -72,7 +68,7 @@ const ReportSummaryCard = ({ well }) => (
           well.phases.flatMap((p) => p.dailyReports).flatMap((r) => r.equipmentUsed)
         ).size}
       />
-    </div>
+    </div> */}
   </div>
 );
 

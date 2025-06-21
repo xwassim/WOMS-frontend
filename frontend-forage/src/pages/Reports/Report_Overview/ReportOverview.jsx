@@ -7,33 +7,38 @@ const ReportOverview = () => {
   const [editMode, setEditMode] = useState(false);
   const [editedReport, setEditedReport] = useState(null);
   const [report, setReport] = useState(null);
-  const [error, setError] = useState(null);  
+  const [error, setError] = useState(null);
+  const [problems, setProblems] = useState([]);
   const timePart="" ;
   const description="";
   const endTime="";
   const startTime="";
 
-
   useEffect(() => {
-    const fetchReport = async () => {
+    const fetchReportAndProblems = async () => {
       try {
+        // Fetch report
         const response = await axios.get(
           `http://localhost:9090/api/daily-reports/well/${wellId}/report/${reportId}`
         );
         setReport(response.data);
         setEditedReport(response.data);
 
+        // Fetch problems
+        const problemsResponse = await axios.get(
+          `http://localhost:9090/api/problemes/rapport/${reportId}`
+        );
+        setProblems(problemsResponse.data);
+        console.log("Problèmes récupérés:", problemsResponse.data);
+
       } catch (err) {
-        console.error("Erreur lors du chargement du rapport :", err);
-        setError("Impossible de charger le rapport.");
+        console.error("Erreur lors du chargement:", err);
+        setError("Impossible de charger les données.");
       }
     };
 
-    fetchReport();
+    fetchReportAndProblems();
   }, [wellId, reportId]);
-
-
-
 
   if (error) {
     return <div className="text-red-500">{error}</div>;
@@ -448,119 +453,41 @@ const ReportOverview = () => {
           )}
         </div>
         <div className="space-y-3">
-          {editedReport.problems?.map((problem, index) => (
-            <div key={index} className="bg-red-50 p-3 rounded-lg">
-              {editMode ? (
-                <div className="space-y-2">
+          {problems && problems.length > 0 ? (
+            problems.map((problem) => (
+              <div key={problem.id} className="bg-red-50 p-3 rounded-lg">
+                <div className="flex justify-between items-start">
                   <div>
-                    <label className="text-sm font-medium text-red-800">
-                      Nom du problème
-                    </label>
-                    <input
-                      type="text"
-                      value={problem.name}
-                      onChange={(e) =>
-                        handleInputChange(e, "problems", "name", index)
-                      }
-                      className="w-full p-1 border rounded"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-sm font-medium">Type</label>
-                      <input
-                        type="text"
-                        value={problem.type}
-                        onChange={(e) =>
-                          handleInputChange(e, "problems", "type", index)
-                        }
-                        className="w-full p-1 border rounded"
-                      />
+                    <h3 className="font-medium text-red-800">{problem.name}</h3>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                        {problem.type}
+                      </span>
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        problem.gravite === 3 ? 'bg-red-100 text-red-800' :
+                        problem.gravite === 2 ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-green-100 text-green-800'
+                      }`}>
+                        Gravité: {problem.gravite}
+                      </span>
                     </div>
-                    <div>
-                      <label className="text-sm font-medium">Gravité</label>
-                      <select
-                        value={problem.severity}
-                        onChange={(e) =>
-                          handleInputChange(e, "problems", "severity", index)
-                        }
-                        className="w-full p-1 border rounded"
-                      >
-                        {[1, 2, 3].map((num) => (
-                          <option key={num} value={num}>
-                            {num}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between items-center">
-                      <label className="text-sm font-medium">Solutions</label>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleAddSolution(index);
-                        }}
-                        className="text-blue-500 font-semibold hover:text-blue-700 text-sm"
-                      >
-                        Ajouter une solution
-                      </button>
-                    </div>
-                    {problem.solutions?.map((solution, solIndex) => (
-                      <div key={solIndex} className="flex items-center mt-1">
-                        <input
-                          type="text"
-                          value={solution}
-                          onChange={(e) => {
-                            const newProblems = [...editedReport.problems];
-                            newProblems[index].solutions[solIndex] =
-                              e.target.value;
-                            setEditedReport({
-                              ...editedReport,
-                              problems: newProblems,
-                            });
-                          }}
-                          className="w-full p-1 border rounded"
-                        />
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handleRemoveSolution(index, solIndex);
-                          }}
-                          className="ml-2 text-red-500 hover:text-red-700"
-                        >
-                          ×
-                        </button>
+                    {problem.solutions && problem.solutions.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-sm font-medium text-gray-700">Solutions proposées :</p>
+                        <ul className="list-disc pl-5 text-sm text-gray-600">
+                          {problem.solutions.map((solution, i) => (
+                            <li key={i}>{solution}</li>
+                          ))}
+                        </ul>
                       </div>
-                    ))}
+                    )}
                   </div>
-                  <button
-                    onClick={() => handleRemoveProblem(index)}
-                    className="text-red-500 font-semibold hover:text-red-700 text-sm"
-                  >
-                    Supprimer le problème
-                  </button>
                 </div>
-              ) : (
-                <>
-                  <h3 className="font-medium text-red-800">{problem.name}</h3>
-                  <p className="text-gray-700">Type : {problem.type}</p>
-                  <p className="text-gray-700">Gravité : {problem.severity}</p>
-                  {problem.solutions?.length > 0 && (
-                    <div className="mt-1">
-                      <p className="text-sm font-medium">Solutions :</p>
-                      <ul className="list-disc pl-5 text-sm">
-                        {problem.solutions.map((solution, i) => (
-                          <li key={i}>{solution}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          ))}
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-500 text-center py-4">Aucun problème signalé</p>
+          )}
         </div>
       </div>
     </div>
