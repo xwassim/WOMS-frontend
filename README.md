@@ -32,7 +32,7 @@ This repository contains the **frontend** of the WOMS platform.
 The frontend communicates with a Spring Boot backend through REST APIs.
 
 Backend repository:  
-[WOMS Backend(https://github.com/xwassim/WOMS-backend)]
+[WOMS Backend](https://github.com/xwassim/WOMS-backend)
 ## Contribution
 
 I mainly contributed to the frontend development and user interface of the project.
